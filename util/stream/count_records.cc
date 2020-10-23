@@ -1,7 +1,8 @@
 #include "util/stream/count_records.hh"
 #include "util/stream/chain.hh"
 
-namespace util { namespace stream {
+namespace util {
+namespace stream {
 
 void CountRecords::Run(const ChainPosition &position) {
   for (Link link(position); link; ++link) {
@@ -9,4 +10,5 @@ void CountRecords::Run(const ChainPosition &position) {
   }
 }
 
-}} // namespaces
+} // namespace stream
+} // namespace util

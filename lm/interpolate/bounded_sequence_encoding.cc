@@ -2,10 +2,12 @@
 
 #include <algorithm>
 
-namespace lm { namespace interpolate {
+namespace lm {
+namespace interpolate {
 
-BoundedSequenceEncoding::BoundedSequenceEncoding(const unsigned char *bound_begin, const unsigned char *bound_end)
-  : entries_(bound_end - bound_begin) {
+BoundedSequenceEncoding::BoundedSequenceEncoding(
+    const unsigned char *bound_begin, const unsigned char *bound_end)
+    : entries_(bound_end - bound_begin) {
   std::size_t full = 0;
   Entry entry;
   entry.shift = 0;
@@ -33,4 +35,5 @@ BoundedSequenceEncoding::BoundedSequenceEncoding(const unsigned char *bound_begi
   overhang_ = byte_length_ == 0 ? 0 : ((byte_length_ - 1) % 8 + 1);
 }
 
-}} // namespaces
+} // namespace interpolate
+} // namespace lm

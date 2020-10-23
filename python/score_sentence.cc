@@ -17,7 +17,8 @@ float ScoreSentence(const base::Model *model, const char *sentence) {
   lm::ngram::State *state2 = &state_vec[1];
   model->BeginSentenceWrite(state);
   float ret = 0.0;
-  for (util::TokenIter<util::BoolCharacter, true> i(sentence, util::kSpaces); i; ++i) {
+  for (util::TokenIter<util::BoolCharacter, true> i(sentence, util::kSpaces); i;
+       ++i) {
     lm::WordIndex index = vocab.Index(*i);
     ret += model->BaseScore(state, index, state2);
     std::swap(state, state2);

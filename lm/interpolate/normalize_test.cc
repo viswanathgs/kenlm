@@ -1,36 +1,40 @@
 #include "lm/interpolate/normalize.hh"
 
+#include "lm/common/ngram_stream.hh"
 #include "lm/interpolate/interpolate_info.hh"
 #include "lm/interpolate/merge_probabilities.hh"
-#include "lm/common/ngram_stream.hh"
 #include "util/stream/chain.hh"
 #include "util/stream/multi_stream.hh"
 
 #define BOOST_TEST_MODULE NormalizeTest
 #include <boost/test/unit_test.hpp>
 
-namespace lm { namespace interpolate { namespace {
+namespace lm {
+namespace interpolate {
+namespace {
 
 // log without backoff
 const float kInputs[] = {-0.3, 1.2, -9.8, 4.0, -7.0, 0.0};
 
 class WriteInput {
-  public:
-    WriteInput() {}
-    void Run(const util::stream::ChainPosition &to) {
-      util::stream::Stream out(to);
-      for (WordIndex i = 0; i < sizeof(kInputs) / sizeof(float); ++i, ++out) {
-        memcpy(out.Get(), &i, sizeof(WordIndex));
-        memcpy((uint8_t*)out.Get() + sizeof(WordIndex), &kInputs[i], sizeof(float));
-      }
-      out.Poison();
+public:
+  WriteInput() {}
+  void Run(const util::stream::ChainPosition &to) {
+    util::stream::Stream out(to);
+    for (WordIndex i = 0; i < sizeof(kInputs) / sizeof(float); ++i, ++out) {
+      memcpy(out.Get(), &i, sizeof(WordIndex));
+      memcpy((uint8_t *)out.Get() + sizeof(WordIndex), &kInputs[i],
+             sizeof(float));
     }
+    out.Poison();
+  }
 };
 
 void CheckOutput(const util::stream::ChainPosition &from) {
   NGramStream<float> in(from);
   float sum = 0.0;
-  for (WordIndex i = 0; i < sizeof(kInputs) / sizeof(float) - 1 /* <s> at the end */; ++i) {
+  for (WordIndex i = 0;
+       i < sizeof(kInputs) / sizeof(float) - 1 /* <s> at the end */; ++i) {
     sum += pow(10.0, kInputs[i]);
   }
   sum = log10(sum);
@@ -68,11 +72,14 @@ BOOST_AUTO_TEST_CASE(Unigrams) {
   util::stream::Chains probabilities_out(1);
   util::stream::Chains backoffs_out(0);
 
-  merged_probabilities.push_back(util::stream::ChainConfig(sizeof(WordIndex) + sizeof(float) + sizeof(float), 2, 24));
-  probabilities_out.push_back(util::stream::ChainConfig(sizeof(WordIndex) + sizeof(float), 2, 100));
+  merged_probabilities.push_back(util::stream::ChainConfig(
+      sizeof(WordIndex) + sizeof(float) + sizeof(float), 2, 24));
+  probabilities_out.push_back(
+      util::stream::ChainConfig(sizeof(WordIndex) + sizeof(float), 2, 100));
 
   merged_probabilities[0] >> WriteInput();
-  Normalize(info, models_by_order, merged_probabilities, probabilities_out, backoffs_out);
+  Normalize(info, models_by_order, merged_probabilities, probabilities_out,
+            backoffs_out);
 
   util::stream::ChainPosition checker(probabilities_out[0].Add());
 
@@ -83,4 +90,6 @@ BOOST_AUTO_TEST_CASE(Unigrams) {
   probabilities_out.Wait();
 }
 
-}}} // namespaces
+} // namespace
+} // namespace interpolate
+} // namespace lm

@@ -4,9 +4,9 @@
 #include "util/scoped.hh"
 
 #define BOOST_TEST_MODULE ProbingHashTableTest
-#include <boost/test/unit_test.hpp>
-#include <boost/scoped_array.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/test/unit_test.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -19,17 +19,11 @@ struct Entry {
   unsigned char key;
   typedef unsigned char Key;
 
-  unsigned char GetKey() const {
-    return key;
-  }
+  unsigned char GetKey() const { return key; }
 
-  void SetKey(unsigned char to) {
-    key = to;
-  }
+  void SetKey(unsigned char to) { key = to; }
 
-  uint64_t GetValue() const {
-    return value;
-  }
+  uint64_t GetValue() const { return value; }
 
   uint64_t value;
 };
@@ -60,9 +54,7 @@ struct Entry64 {
 
   Entry64() {}
 
-  explicit Entry64(uint64_t key_in) {
-    key = key_in;
-  }
+  explicit Entry64(uint64_t key_in) { key = key_in; }
 
   Key GetKey() const { return key; }
   void SetKey(uint64_t to) { key = to; }
@@ -89,7 +81,7 @@ BOOST_AUTO_TEST_CASE(Double) {
     mem.call_realloc(table.DoubleTo());
     table.Double(mem.get());
     table.CheckConsistency();
-    for (uint64_t i = 20; i < 40 ; ++i) {
+    for (uint64_t i = 20; i < 40; ++i) {
       table.Insert(Entry64(i));
     }
     mem.call_realloc(table.DoubleTo());

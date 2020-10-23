@@ -1,14 +1,16 @@
 #include "util/stream/io.hh"
 
-#include "util/stream/chain.hh"
 #include "util/file.hh"
+#include "util/stream/chain.hh"
 
 #define BOOST_TEST_MODULE IOTest
 #include <boost/test/unit_test.hpp>
 
 #include <unistd.h>
 
-namespace util { namespace stream { namespace {
+namespace util {
+namespace stream {
+namespace {
 
 BOOST_AUTO_TEST_CASE(CopyFile) {
   std::string temps("io_test_temp");
@@ -35,4 +37,6 @@ BOOST_AUTO_TEST_CASE(CopyFile) {
   }
 }
 
-}}} // namespaces
+} // namespace
+} // namespace stream
+} // namespace util

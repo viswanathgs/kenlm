@@ -8,8 +8,8 @@
 #include <cstring>
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
 #include <io.h>
+#include <windows.h>
 #endif
 
 namespace util {
@@ -17,7 +17,9 @@ namespace util {
 Exception::Exception() throw() {}
 Exception::~Exception() throw() {}
 
-void Exception::SetLocation(const char *file, unsigned int line, const char *func, const char *child_name, const char *condition) {
+void Exception::SetLocation(const char *file, unsigned int line,
+                            const char *func, const char *child_name,
+                            const char *condition) {
   /* The child class might have set some text, but we want this to come first.
    * Another option would be passing this information to the constructor, but
    * then child classes would have to accept constructor arguments and pass
@@ -26,7 +28,8 @@ void Exception::SetLocation(const char *file, unsigned int line, const char *fun
   std::string old_text;
   what_.swap(old_text);
   what_ << file << ':' << line;
-  if (func) what_ << " in " << func << " threw ";
+  if (func)
+    what_ << " in " << func << " threw ";
   if (child_name) {
     what_ << child_name;
   } else {
@@ -46,8 +49,9 @@ void Exception::SetLocation(const char *file, unsigned int line, const char *fun
 namespace {
 
 #ifdef __GNUC__
-const char *HandleStrerror(int ret, const char *buf) __attribute__ ((unused));
-const char *HandleStrerror(const char *ret, const char * /*buf*/) __attribute__ ((unused));
+const char *HandleStrerror(int ret, const char *buf) __attribute__((unused));
+const char *HandleStrerror(const char *ret, const char * /*buf*/)
+    __attribute__((unused));
 #endif
 // At least one of these functions will not be called.
 #ifdef __clang__
@@ -56,7 +60,8 @@ const char *HandleStrerror(const char *ret, const char * /*buf*/) __attribute__ 
 #endif
 // The XOPEN version.
 const char *HandleStrerror(int ret, const char *buf) {
-  if (!ret) return buf;
+  if (!ret)
+    return buf;
   return NULL;
 }
 
@@ -92,8 +97,11 @@ OverflowException::~OverflowException() throw() {}
 WindowsException::WindowsException() throw() {
   unsigned int last_error = GetLastError();
   char error_msg[256] = "";
-  if (!FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, last_error, LANG_NEUTRAL, error_msg, sizeof(error_msg), NULL)) {
-    *this << "Windows error " << GetLastError() << " while formatting Windows error " << last_error << ". ";
+  if (!FormatMessageA(
+          FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+          last_error, LANG_NEUTRAL, error_msg, sizeof(error_msg), NULL)) {
+    *this << "Windows error " << GetLastError()
+          << " while formatting Windows error " << last_error << ". ";
   } else {
     *this << "Windows error " << last_error << ": " << error_msg;
   }

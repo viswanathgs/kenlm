@@ -2,13 +2,14 @@
 #include "lm/model.hh"
 #include "util/file_piece.hh"
 
-#include <vector>
 #include <iomanip>
+#include <vector>
 
 namespace lm {
 namespace ngram {
 
-void ShowSizes(const std::vector<uint64_t> &counts, const lm::ngram::Config &config) {
+void ShowSizes(const std::vector<uint64_t> &counts,
+               const lm::ngram::Config &config) {
   uint64_t sizes[6];
   sizes[0] = ProbingModel::Size(counts, config);
   sizes[1] = RestProbingModel::Size(counts, config);
@@ -16,8 +17,10 @@ void ShowSizes(const std::vector<uint64_t> &counts, const lm::ngram::Config &con
   sizes[3] = QuantTrieModel::Size(counts, config);
   sizes[4] = ArrayTrieModel::Size(counts, config);
   sizes[5] = QuantArrayTrieModel::Size(counts, config);
-  uint64_t max_length = *std::max_element(sizes, sizes + sizeof(sizes) / sizeof(uint64_t));
-  uint64_t min_length = *std::min_element(sizes, sizes + sizeof(sizes) / sizeof(uint64_t));
+  uint64_t max_length =
+      *std::max_element(sizes, sizes + sizeof(sizes) / sizeof(uint64_t));
+  uint64_t min_length =
+      *std::min_element(sizes, sizes + sizeof(sizes) / sizeof(uint64_t));
   uint64_t divide;
   char prefix;
   if (min_length < (1 << 10) * 10) {
@@ -33,19 +36,42 @@ void ShowSizes(const std::vector<uint64_t> &counts, const lm::ngram::Config &con
     prefix = 'G';
     divide = 1 << 30;
   }
-  long int length = std::max<long int>(2, static_cast<long int>(ceil(log10((double) max_length / divide))));
+  long int length = std::max<long int>(
+      2, static_cast<long int>(ceil(log10((double)max_length / divide))));
   std::cerr << "Memory estimate for binary LM:\ntype    ";
 
   // right align bytes.
-  for (long int i = 0; i < length - 2; ++i) std::cerr << ' ';
+  for (long int i = 0; i < length - 2; ++i)
+    std::cerr << ' ';
 
-  std::cerr << prefix << "B\n"
-    "probing " << std::setw(length) << (sizes[0] / divide) << " assuming -p " << config.probing_multiplier << "\n"
-    "probing " << std::setw(length) << (sizes[1] / divide) << " assuming -r models -p " << config.probing_multiplier << "\n"
-    "trie    " << std::setw(length) << (sizes[2] / divide) << " without quantization\n"
-    "trie    " << std::setw(length) << (sizes[3] / divide) << " assuming -q " << (unsigned)config.prob_bits << " -b " << (unsigned)config.backoff_bits << " quantization \n"
-    "trie    " << std::setw(length) << (sizes[4] / divide) << " assuming -a " << (unsigned)config.pointer_bhiksha_bits << " array pointer compression\n"
-    "trie    " << std::setw(length) << (sizes[5] / divide) << " assuming -a " << (unsigned)config.pointer_bhiksha_bits << " -q " << (unsigned)config.prob_bits << " -b " << (unsigned)config.backoff_bits<< " array pointer compression and quantization\n";
+  std::cerr << prefix
+            << "B\n"
+               "probing "
+            << std::setw(length) << (sizes[0] / divide) << " assuming -p "
+            << config.probing_multiplier
+            << "\n"
+               "probing "
+            << std::setw(length) << (sizes[1] / divide)
+            << " assuming -r models -p " << config.probing_multiplier
+            << "\n"
+               "trie    "
+            << std::setw(length) << (sizes[2] / divide)
+            << " without quantization\n"
+               "trie    "
+            << std::setw(length) << (sizes[3] / divide) << " assuming -q "
+            << (unsigned)config.prob_bits << " -b "
+            << (unsigned)config.backoff_bits
+            << " quantization \n"
+               "trie    "
+            << std::setw(length) << (sizes[4] / divide) << " assuming -a "
+            << (unsigned)config.pointer_bhiksha_bits
+            << " array pointer compression\n"
+               "trie    "
+            << std::setw(length) << (sizes[5] / divide) << " assuming -a "
+            << (unsigned)config.pointer_bhiksha_bits << " -q "
+            << (unsigned)config.prob_bits << " -b "
+            << (unsigned)config.backoff_bits
+            << " array pointer compression and quantization\n";
 }
 
 void ShowSizes(const std::vector<uint64_t> &counts) {
@@ -60,4 +86,5 @@ void ShowSizes(const char *file, const lm::ngram::Config &config) {
   ShowSizes(counts, config);
 }
 
-}} //namespaces
+} // namespace ngram
+} // namespace lm

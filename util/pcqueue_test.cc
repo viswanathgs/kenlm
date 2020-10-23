@@ -16,5 +16,5 @@ BOOST_AUTO_TEST_CASE(SingleThread) {
   }
 }
 
-}
+} // namespace
 } // namespace util

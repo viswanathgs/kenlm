@@ -1,10 +1,10 @@
 #include "lm/common/compare.hh"
 #include "lm/common/model_buffer.hh"
 #include "lm/common/ngram.hh"
+#include "lm/interpolate/split_worker.hh"
 #include "util/stream/chain.hh"
 #include "util/stream/multi_stream.hh"
 #include "util/stream/sort.hh"
-#include "lm/interpolate/split_worker.hh"
 
 #include <boost/program_options.hpp>
 #include <boost/version.hpp>
@@ -43,26 +43,26 @@ int main(int argc, char *argv[]) {
     namespace po = boost::program_options;
     po::options_description options("canhazinterp Pass-3 options");
 
-    options.add_options()
-      ("help,h", po::bool_switch(), "Show this help message")
-      ("ngrams,n", po::value<std::string>(&FILE_NAME), "ngrams file")
-      ("csortngrams,c", po::value<std::string>(&CONTEXT_SORTED_FILENAME), "context sorted ngrams file")
-      ("backoffs,b", po::value<std::string>(&BACKOFF_FILENAME), "backoffs file")
-      ("tmpdir,t", po::value<std::string>(&TMP_DIR), "tmp dir");
+    options.add_options()("help,h", po::bool_switch(),
+                          "Show this help message")(
+        "ngrams,n", po::value<std::string>(&FILE_NAME), "ngrams file")(
+        "csortngrams,c", po::value<std::string>(&CONTEXT_SORTED_FILENAME),
+        "context sorted ngrams file")("backoffs,b",
+                                      po::value<std::string>(&BACKOFF_FILENAME),
+                                      "backoffs file")(
+        "tmpdir,t", po::value<std::string>(&TMP_DIR), "tmp dir");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
 
     // Display help
-    if(vm["help"].as<bool>()) {
+    if (vm["help"].as<bool>()) {
       std::cerr << "Usage: " << options << std::endl;
       return 1;
     }
-  }
-  catch(const std::exception &e) {
+  } catch (const std::exception &e) {
 
     std::cerr << e.what() << std::endl;
     return 1;
-
   }
 
   // The basic strategy here is to have three chains:
@@ -89,8 +89,9 @@ int main(int argc, char *argv[]) {
   util::stream::Chains backoff_chains(buffer.Order());
   util::stream::Chains prob_chains(buffer.Order());
   for (std::size_t i = 0; i < buffer.Order(); ++i) {
-    ngram_inputs.push_back(util::stream::ChainConfig(
-        lm::NGram<lm::ProbBackoff>::TotalSize(i + 1), NUMBER_OF_BLOCKS, ONE_GB));
+    ngram_inputs.push_back(
+        util::stream::ChainConfig(lm::NGram<lm::ProbBackoff>::TotalSize(i + 1),
+                                  NUMBER_OF_BLOCKS, ONE_GB));
 
     backoff_chains.push_back(
         util::stream::ChainConfig(sizeof(float), NUMBER_OF_BLOCKS, ONE_GB));

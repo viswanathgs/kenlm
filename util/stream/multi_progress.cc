@@ -12,18 +12,23 @@
 #include <unistd.h>
 #endif
 
-namespace util { namespace stream {
+namespace util {
+namespace stream {
 
 namespace {
 const char kDisplayCharacters[] = "-+*#0123456789";
 
 uint64_t Next(unsigned char stone, uint64_t complete) {
-  return (static_cast<uint64_t>(stone + 1) * complete + MultiProgress::kWidth - 1) / MultiProgress::kWidth;
+  return (static_cast<uint64_t>(stone + 1) * complete + MultiProgress::kWidth -
+          1) /
+         MultiProgress::kWidth;
 }
 
 } // namespace
 
-MultiProgress::MultiProgress() : active_(false), complete_(std::numeric_limits<uint64_t>::max()), character_handout_(0) {}
+MultiProgress::MultiProgress()
+    : active_(false), complete_(std::numeric_limits<uint64_t>::max()),
+      character_handout_(0) {}
 
 MultiProgress::~MultiProgress() {
   if (active_ && complete_ != std::numeric_limits<uint64_t>::max())
@@ -33,18 +38,20 @@ MultiProgress::~MultiProgress() {
 void MultiProgress::Activate() {
   active_ =
 #if !defined(_WIN32) && !defined(_WIN64)
-    // Is stderr a terminal?
-    (isatty(2) == 1)
+      // Is stderr a terminal?
+      (isatty(2) == 1)
 #else
-    true
+      true
 #endif
-    ;
+      ;
 }
 
 void MultiProgress::SetTarget(uint64_t complete) {
-  if (!active_) return;
+  if (!active_)
+    return;
   complete_ = complete;
-  if (!complete) complete_ = 1;
+  if (!complete)
+    complete_ = 1;
   memset(display_, 0, sizeof(display_));
   character_handout_ = 0;
   std::cerr << kProgressBanner;
@@ -60,18 +67,22 @@ WorkerProgress MultiProgress::Add() {
     if (character_handout_ == sizeof(kDisplayCharacters) - 1)
       character_handout_ = 0;
   }
-  return WorkerProgress(Next(0, complete_), *this, kDisplayCharacters[character_index]);
+  return WorkerProgress(Next(0, complete_), *this,
+                        kDisplayCharacters[character_index]);
 }
 
 void MultiProgress::Finished() {
-  if (!active_ || complete_ == std::numeric_limits<uint64_t>::max()) return;
+  if (!active_ || complete_ == std::numeric_limits<uint64_t>::max())
+    return;
   std::cerr << '\n';
   complete_ = std::numeric_limits<uint64_t>::max();
 }
 
 void MultiProgress::Milestone(WorkerProgress &worker) {
-  if (!active_ || complete_ == std::numeric_limits<uint64_t>::max()) return;
-  unsigned char stone = std::min(static_cast<uint64_t>(kWidth), worker.current_ * kWidth / complete_);
+  if (!active_ || complete_ == std::numeric_limits<uint64_t>::max())
+    return;
+  unsigned char stone = std::min(static_cast<uint64_t>(kWidth),
+                                 worker.current_ * kWidth / complete_);
   for (char *i = &display_[worker.stone_]; i < &display_[stone]; ++i) {
     *i = worker.character_;
   }
@@ -83,4 +94,5 @@ void MultiProgress::Milestone(WorkerProgress &worker) {
   }
 }
 
-}} // namespaces
+} // namespace stream
+} // namespace util

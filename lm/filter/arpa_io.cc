@@ -17,17 +17,19 @@ ARPAInputException::ARPAInputException(const StringPiece &message) throw() {
   *this << message;
 }
 
-ARPAInputException::ARPAInputException(const StringPiece &message, const StringPiece &line) throw() {
+ARPAInputException::ARPAInputException(const StringPiece &message,
+                                       const StringPiece &line) throw() {
   *this << message << " in line " << line;
 }
 
 ARPAInputException::~ARPAInputException() throw() {}
 
 // Seeking is the responsibility of the caller.
-template <class Stream> void WriteCounts(Stream &out, const std::vector<uint64_t> &number) {
+template <class Stream>
+void WriteCounts(Stream &out, const std::vector<uint64_t> &number) {
   out << "\n\\data\\\n";
   for (unsigned int i = 0; i < number.size(); ++i) {
-    out << "ngram " << i+1 << "=" << number[i] << '\n';
+    out << "ngram " << i + 1 << "=" << number[i] << '\n';
   }
   out << '\n';
 }
@@ -40,13 +42,15 @@ size_t SizeNeededForCounts(const std::vector<uint64_t> &number) {
 
 bool IsEntirelyWhiteSpace(const StringPiece &line) {
   for (size_t i = 0; i < static_cast<size_t>(line.size()); ++i) {
-    if (!isspace(line.data()[i])) return false;
+    if (!isspace(line.data()[i]))
+      return false;
   }
   return true;
 }
 
 ARPAOutput::ARPAOutput(const char *name, size_t buffer_size)
-  : file_backing_(util::CreateOrThrow(name)), file_(file_backing_.get(), buffer_size) {}
+    : file_backing_(util::CreateOrThrow(name)),
+      file_(file_backing_.get(), buffer_size) {}
 
 void ARPAOutput::ReserveForCounts(std::streampos reserve) {
   for (std::streampos i = 0; i < reserve; i += std::streampos(1)) {

@@ -14,7 +14,9 @@
 
 #include <math.h>
 
-namespace lm { namespace interpolate { namespace {
+namespace lm {
+namespace interpolate {
+namespace {
 
 BOOST_AUTO_TEST_CASE(Toy) {
   util::scoped_fd test_input(util::MakeTemp("temporary"));
@@ -80,22 +82,21 @@ BOOST_AUTO_TEST_CASE(Toy) {
   BOOST_CHECK_CLOSE(-0.30103 * M_LN10, inst.LNBackoffs(0)(0), 0.001);
   BOOST_CHECK_CLOSE(-0.30103 * M_LN10, inst.LNBackoffs(0)(1), 0.001);
 
-
   // Backoffs of <s> c
   BOOST_CHECK_CLOSE(0.0, inst.LNBackoffs(1)(0), 0.001);
-  BOOST_CHECK_CLOSE((-0.30103 - 0.30103) * M_LN10, inst.LNBackoffs(1)(1), 0.001);
+  BOOST_CHECK_CLOSE((-0.30103 - 0.30103) * M_LN10, inst.LNBackoffs(1)(1),
+                    0.001);
 
-  util::stream::Chain extensions(util::stream::ChainConfig(inst.ReadExtensionsEntrySize(), 2, 300));
+  util::stream::Chain extensions(
+      util::stream::ChainConfig(inst.ReadExtensionsEntrySize(), 2, 300));
   inst.ReadExtensions(extensions);
   util::stream::TypedStream<Extension> stream(extensions.Add());
   extensions >> util::stream::kRecycle;
 
-  // The extensions are (in order of instance, vocab id, and model as they should be sorted):
-  // <s> a from both models 0 and 1 (so two instances)
-  // <s> c from model 1
-  // <s> b from model 0
-  // c </s> from model 1
-  // Magic probabilities come from querying the models directly.
+  // The extensions are (in order of instance, vocab id, and model as they
+  // should be sorted): <s> a from both models 0 and 1 (so two instances) <s> c
+  // from model 1 <s> b from model 0 c </s> from model 1 Magic probabilities
+  // come from querying the models directly.
 
   // <s> a from model 0
   BOOST_REQUIRE(stream);
@@ -135,4 +136,6 @@ BOOST_AUTO_TEST_CASE(Toy) {
   BOOST_CHECK(!++stream);
 }
 
-}}} // namespaces
+} // namespace
+} // namespace interpolate
+} // namespace lm

@@ -5,7 +5,9 @@
 
 namespace util {
 namespace {
-const double_conversion::DoubleToStringConverter kConverter(double_conversion::DoubleToStringConverter::NO_FLAGS, "inf", "NaN", 'e', -6, 21, 6, 0);
+const double_conversion::DoubleToStringConverter
+    kConverter(double_conversion::DoubleToStringConverter::NO_FLAGS, "inf",
+               "NaN", 'e', -6, 21, 6, 0);
 } // namespace
 
 char *ToString(double value, char *to) {

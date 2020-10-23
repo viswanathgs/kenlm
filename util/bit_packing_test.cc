@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(EachBit57) {
 }
 
 BOOST_AUTO_TEST_CASE(Consecutive57) {
-  char mem[57+8];
+  char mem[57 + 8];
   memset(mem, 0, sizeof(mem));
   for (uint64_t b = 0; b < 57 * 8; b += 57) {
     WriteInt57(mem, b, 57, test57);
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(Consecutive57) {
 }
 
 BOOST_AUTO_TEST_CASE(Consecutive25) {
-  char mem[25+8];
+  char mem[25 + 8];
   memset(mem, 0, sizeof(mem));
   for (uint64_t b = 0; b < 25 * 8; b += 25) {
     WriteInt25(mem, b, 25, test25);
@@ -51,9 +51,7 @@ BOOST_AUTO_TEST_CASE(Consecutive25) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(Sanity) {
-  BitPackingSanity();
-}
+BOOST_AUTO_TEST_CASE(Sanity) { BitPackingSanity(); }
 
 } // namespace
 } // namespace util

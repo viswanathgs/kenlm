@@ -7,12 +7,13 @@
 
 #include <iostream>
 
-namespace lm { namespace builder {
+namespace lm {
+namespace builder {
 
 OutputHook::~OutputHook() {}
 
 Output::Output(StringPiece file_base, bool keep_buffer, bool output_q)
-  : buffer_(file_base, keep_buffer, output_q) {}
+    : buffer_(file_base, keep_buffer, output_q) {}
 
 void Output::SinkProbs(util::stream::Chains &chains) {
   Apply(PROB_PARALLEL_HOOK, chains);
@@ -34,12 +35,15 @@ void Output::SinkProbs(util::stream::Chains &chains) {
 }
 
 void Output::Apply(HookType hook_type, util::stream::Chains &chains) {
-  for (boost::ptr_vector<OutputHook>::iterator entry = outputs_[hook_type].begin(); entry != outputs_[hook_type].end(); ++entry) {
+  for (boost::ptr_vector<OutputHook>::iterator entry =
+           outputs_[hook_type].begin();
+       entry != outputs_[hook_type].end(); ++entry) {
     entry->Sink(header_, VocabFile(), chains);
   }
 }
 
-void PrintHook::Sink(const HeaderInfo &info, int vocab_file, util::stream::Chains &chains) {
+void PrintHook::Sink(const HeaderInfo &info, int vocab_file,
+                     util::stream::Chains &chains) {
   if (verbose_header_) {
     util::FileStream out(file_.get(), 50);
     out << "# Input file: " << info.input_file << '\n';
@@ -49,4 +53,5 @@ void PrintHook::Sink(const HeaderInfo &info, int vocab_file, util::stream::Chain
   chains >> PrintARPA(vocab_file, file_.get(), info.counts_pruned);
 }
 
-}} // namespaces
+} // namespace builder
+} // namespace lm

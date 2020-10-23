@@ -32,9 +32,11 @@ void ExhaustiveTest(unsigned char *bound_begin, unsigned char *bound_end) {
       BOOST_CHECK_EQUAL(values[i], out[i]);
     }
     for (std::size_t i = 0;; ++i) {
-      if (i == values.size()) return;
+      if (i == values.size())
+        return;
       ++values[i];
-      if (values[i] < bound_begin[i]) break;
+      if (values[i] < bound_begin[i])
+        break;
       values[i] = 0;
     }
   }
@@ -94,4 +96,6 @@ BOOST_AUTO_TEST_CASE(MoreThan64) {
   CheckEncodeDecode(bounds, input, output, len);
 }
 
-}}} // namespaces
+} // namespace
+} // namespace interpolate
+} // namespace lm

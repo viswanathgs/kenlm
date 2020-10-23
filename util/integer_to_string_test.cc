@@ -3,8 +3,8 @@
 #include "util/string_piece.hh"
 
 #define BOOST_TEST_MODULE IntegerToStringTest
-#include <boost/test/unit_test.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <limits>
 
@@ -14,7 +14,8 @@ namespace {
 template <class T> void TestValue(const T value) {
   char buf[ToStringBuf<T>::kBytes];
   StringPiece result(buf, ToString(value, buf) - buf);
-  BOOST_REQUIRE_GE(static_cast<std::size_t>(ToStringBuf<T>::kBytes), result.size());
+  BOOST_REQUIRE_GE(static_cast<std::size_t>(ToStringBuf<T>::kBytes),
+                   result.size());
   if (value) {
     BOOST_CHECK_EQUAL(boost::lexical_cast<std::string>(value), result);
   } else {
@@ -38,11 +39,12 @@ BOOST_AUTO_TEST_CASE(Corners) {
   TestCorners<int16_t>();
   TestCorners<int32_t>();
   TestCorners<int64_t>();
-  TestCorners<const void*>();
+  TestCorners<const void *>();
 }
 
 template <class T> void TestAll() {
-  for (T i = std::numeric_limits<T>::min(); i < std::numeric_limits<T>::max(); ++i) {
+  for (T i = std::numeric_limits<T>::min(); i < std::numeric_limits<T>::max();
+       ++i) {
     TestValue(i);
   }
   TestValue(std::numeric_limits<T>::max());
@@ -69,13 +71,15 @@ BOOST_AUTO_TEST_CASE(Tens) {
 }
 
 BOOST_AUTO_TEST_CASE(Pointers) {
-  for (uintptr_t i = 1; i < std::numeric_limits<uintptr_t>::max() / 10; i *= 10) {
-    TestValue((const void*)i);
+  for (uintptr_t i = 1; i < std::numeric_limits<uintptr_t>::max() / 10;
+       i *= 10) {
+    TestValue((const void *)i);
   }
   for (uintptr_t i = 0; i < 256; ++i) {
-    TestValue((const void*)i);
-    TestValue((const void*)(i + 0xf00));
+    TestValue((const void *)i);
+    TestValue((const void *)(i + 0xf00));
   }
 }
 
-}} // namespaces
+} // namespace
+} // namespace util

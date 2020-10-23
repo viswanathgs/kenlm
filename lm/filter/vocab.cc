@@ -1,7 +1,7 @@
 #include "lm/filter/vocab.hh"
 
-#include <istream>
 #include <iostream>
+#include <istream>
 
 #include <cctype>
 
@@ -21,17 +21,21 @@ bool IsLineEnd(std::istream &in) {
   int got;
   do {
     got = in.get();
-    if (!in) return true;
-    if (got == '\n') return true;
+    if (!in)
+      return true;
+    if (got == '\n')
+      return true;
   } while (isspace(got));
   in.unget();
   return false;
 }
-}// namespace
+} // namespace
 
 // Read space separated words in enter separated lines.  These lines can be
 // very long, so don't read an entire line at a time.
-unsigned int ReadMultiple(std::istream &in, boost::unordered_map<std::string, std::vector<unsigned int> > &out) {
+unsigned int ReadMultiple(
+    std::istream &in,
+    boost::unordered_map<std::string, std::vector<unsigned int> > &out) {
   in.exceptions(std::istream::badbit);
   unsigned int sentence = 0;
   bool used_id = false;

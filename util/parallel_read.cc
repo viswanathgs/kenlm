@@ -9,25 +9,26 @@ namespace util {
 namespace {
 
 class Reader {
-  public:
-    explicit Reader(int fd) : fd_(fd) {}
+public:
+  explicit Reader(int fd) : fd_(fd) {}
 
-    struct Request {
-      void *to;
-      std::size_t size;
-      uint64_t offset;
+  struct Request {
+    void *to;
+    std::size_t size;
+    uint64_t offset;
 
-      bool operator==(const Request &other) const {
-        return (to == other.to) && (size == other.size) && (offset == other.offset);
-      }
-    };
-
-    void operator()(const Request &request) {
-      util::ErsatzPRead(fd_, request.to, request.size, request.offset);
+    bool operator==(const Request &other) const {
+      return (to == other.to) && (size == other.size) &&
+             (offset == other.offset);
     }
+  };
 
-  private:
-    int fd_;
+  void operator()(const Request &request) {
+    util::ErsatzPRead(fd_, request.to, request.size, request.offset);
+  }
+
+private:
+  int fd_;
 };
 
 } // namespace
@@ -38,8 +39,10 @@ void ParallelRead(int fd, void *to, std::size_t amount, uint64_t offset) {
   poison.size = 0;
   poison.offset = 0;
   unsigned threads = boost::thread::hardware_concurrency();
-  if (!threads) threads = 2;
-  ThreadPool<Reader> pool(2 /* don't need much of a queue */, threads, fd, poison);
+  if (!threads)
+    threads = 2;
+  ThreadPool<Reader> pool(2 /* don't need much of a queue */, threads, fd,
+                          poison);
   const std::size_t kBatch = 1ULL << 25; // 32 MB
   Reader::Request request;
   request.to = to;
@@ -47,7 +50,7 @@ void ParallelRead(int fd, void *to, std::size_t amount, uint64_t offset) {
   request.offset = offset;
   for (; amount > kBatch; amount -= kBatch) {
     pool.Produce(request);
-    request.to = reinterpret_cast<uint8_t*>(request.to) + kBatch;
+    request.to = reinterpret_cast<uint8_t *>(request.to) + kBatch;
     request.offset += kBatch;
   }
   request.size = amount;
@@ -62,7 +65,7 @@ void ParallelRead(int fd, void *to, std::size_t amount, uint64_t offset) {
 
 namespace util {
 void ParallelRead(int fd, void *to, std::size_t amount, uint64_t offset) {
- util::ErsatzPRead(fd, to, amount, offset);
+  util::ErsatzPRead(fd, to, amount, offset);
 }
 } // namespace util
 

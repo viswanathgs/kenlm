@@ -4,12 +4,12 @@
 #include "util/have.hh"
 
 #define BOOST_TEST_MODULE ReadCompressedTest
-#include <boost/test/unit_test.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/test/unit_test.hpp>
 
+#include <cstdlib>
 #include <fstream>
 #include <string>
-#include <cstdlib>
 
 #if defined __MINGW32__
 #include <ctime>
@@ -17,12 +17,11 @@
 
 #if !defined mkstemp
 // TODO insecure
-int mkstemp(char * stemplate)
-{
-    char *filename = mktemp(stemplate);
-    if (filename == NULL)
-        return -1;
-    return open(filename, O_RDWR | O_CREAT, 0600);
+int mkstemp(char *stemplate) {
+  char *filename = mktemp(stemplate);
+  if (filename == NULL)
+    return -1;
+  return open(filename, O_RDWR | O_CREAT, 0600);
 }
 #endif
 
@@ -32,7 +31,7 @@ namespace util {
 namespace {
 
 void ReadLoop(ReadCompressed &reader, void *to_void, std::size_t amount) {
-  uint8_t *to = static_cast<uint8_t*>(to_void);
+  uint8_t *to = static_cast<uint8_t *>(to_void);
   while (amount) {
     std::size_t ret = reader.Read(to, amount);
     BOOST_REQUIRE(ret);
@@ -90,31 +89,22 @@ void TestRandom(const char *compressor) {
   VerifyRead(reader);
 }
 
-BOOST_AUTO_TEST_CASE(Uncompressed) {
-  TestRandom("cat");
-}
+BOOST_AUTO_TEST_CASE(Uncompressed) { TestRandom("cat"); }
 
 #ifdef HAVE_ZLIB
-BOOST_AUTO_TEST_CASE(ReadGZ) {
-  TestRandom("gzip");
-}
+BOOST_AUTO_TEST_CASE(ReadGZ) { TestRandom("gzip"); }
 #endif // HAVE_ZLIB
 
 #ifdef HAVE_BZLIB
-BOOST_AUTO_TEST_CASE(ReadBZ) {
-  TestRandom("bzip2");
-}
+BOOST_AUTO_TEST_CASE(ReadBZ) { TestRandom("bzip2"); }
 #endif // HAVE_BZLIB
 
 #ifdef HAVE_XZLIB
-BOOST_AUTO_TEST_CASE(ReadXZ) {
-  TestRandom("xz");
-}
+BOOST_AUTO_TEST_CASE(ReadXZ) { TestRandom("xz"); }
 #endif
 
 #ifdef HAVE_ZLIB
-BOOST_AUTO_TEST_CASE(AppendGZ) {
-}
+BOOST_AUTO_TEST_CASE(AppendGZ) {}
 #endif
 
 BOOST_AUTO_TEST_CASE(IStream) {

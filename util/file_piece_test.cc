@@ -1,17 +1,17 @@
 // Tests might fail if you have creative characters in your path.  Sue me.
 #include "util/file_piece.hh"
 
-#include "util/file_stream.hh"
 #include "util/file.hh"
+#include "util/file_stream.hh"
 #include "util/scoped.hh"
 
 #define BOOST_TEST_MODULE FilePieceTest
 #include <boost/test/unit_test.hpp>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <cstdio>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 namespace util {
 namespace {
@@ -45,7 +45,8 @@ BOOST_AUTO_TEST_CASE(MMapReadLine) {
   std::string ref_line;
   while (getline(ref, ref_line)) {
     StringPiece test_line(test.ReadLine());
-    // I submitted a bug report to ICU: http://bugs.icu-project.org/trac/ticket/7924
+    // I submitted a bug report to ICU:
+    // http://bugs.icu-project.org/trac/ticket/7924
     if (!test_line.empty() || !ref_line.empty()) {
       BOOST_CHECK_EQUAL(ref_line, test_line);
     }
@@ -63,7 +64,8 @@ BOOST_AUTO_TEST_CASE(MMapSeek) {
   std::string ref_line;
   while (getline(ref, ref_line)) {
     StringPiece test_line(test.ReadLine());
-    // I submitted a bug report to ICU: http://bugs.icu-project.org/trac/ticket/7924
+    // I submitted a bug report to ICU:
+    // http://bugs.icu-project.org/trac/ticket/7924
     if (!test_line.empty() || !ref_line.empty()) {
       BOOST_CHECK_EQUAL(ref_line, test_line);
     }
@@ -90,7 +92,8 @@ BOOST_AUTO_TEST_CASE(StreamReadLine) {
   std::string ref_line;
   while (getline(ref, ref_line)) {
     StringPiece test_line(test.ReadLine());
-    // I submitted a bug report to ICU: http://bugs.icu-project.org/trac/ticket/7924
+    // I submitted a bug report to ICU:
+    // http://bugs.icu-project.org/trac/ticket/7924
     if (!test_line.empty() || !ref_line.empty()) {
       BOOST_CHECK_EQUAL(ref_line, test_line);
     }
@@ -116,7 +119,8 @@ BOOST_AUTO_TEST_CASE(PlainZipReadLine) {
   std::string ref_line;
   while (getline(ref, ref_line)) {
     StringPiece test_line(test.ReadLine());
-    // I submitted a bug report to ICU: http://bugs.icu-project.org/trac/ticket/7924
+    // I submitted a bug report to ICU:
+    // http://bugs.icu-project.org/trac/ticket/7924
     if (!test_line.empty() || !ref_line.empty()) {
       BOOST_CHECK_EQUAL(ref_line, test_line);
     }
@@ -133,14 +137,15 @@ BOOST_AUTO_TEST_CASE(StreamZipReadLine) {
   std::string command("gzip <\"");
   command += FileLocation() + "\"";
 
-  FILE * catter = popen(command.c_str(), "r");
+  FILE *catter = popen(command.c_str(), "r");
   BOOST_REQUIRE(catter);
 
   FilePiece test(dup(fileno(catter)), "file_piece.cc.gz", NULL, 1);
   std::string ref_line;
   while (getline(ref, ref_line)) {
     StringPiece test_line(test.ReadLine());
-    // I submitted a bug report to ICU: http://bugs.icu-project.org/trac/ticket/7924
+    // I submitted a bug report to ICU:
+    // http://bugs.icu-project.org/trac/ticket/7924
     if (!test_line.empty() || !ref_line.empty()) {
       BOOST_CHECK_EQUAL(ref_line, test_line);
     }

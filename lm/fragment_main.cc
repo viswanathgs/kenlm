@@ -1,6 +1,6 @@
 #include "lm/binary_format.hh"
-#include "lm/model.hh"
 #include "lm/left.hh"
+#include "lm/model.hh"
 #include "util/tokenize_piece.hh"
 
 template <class Model> void Query(const char *name) {
@@ -25,13 +25,13 @@ int main(int argc, char *argv[]) {
   lm::ngram::ModelType model_type = lm::ngram::PROBING;
   lm::ngram::RecognizeBinary(name, model_type);
   switch (model_type) {
-    case lm::ngram::PROBING:
-      Query<lm::ngram::ProbingModel>(name);
-      break;
-    case lm::ngram::REST_PROBING:
-      Query<lm::ngram::RestProbingModel>(name);
-      break;
-    default:
-      std::cerr << "Model type not supported yet." << std::endl;
+  case lm::ngram::PROBING:
+    Query<lm::ngram::ProbingModel>(name);
+    break;
+  case lm::ngram::REST_PROBING:
+    Query<lm::ngram::RestProbingModel>(name);
+    break;
+  default:
+    std::cerr << "Model type not supported yet." << std::endl;
   }
 }

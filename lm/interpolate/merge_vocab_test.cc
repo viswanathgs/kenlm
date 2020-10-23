@@ -21,20 +21,20 @@ namespace interpolate {
 namespace {
 
 struct VocabEntry {
-  explicit VocabEntry(StringPiece value) :
-    str(value), hash(util::MurmurHash64A(value.data(), value.size())) {}
+  explicit VocabEntry(StringPiece value)
+      : str(value), hash(util::MurmurHash64A(value.data(), value.size())) {}
   StringPiece str;
   uint64_t hash;
-  bool operator<(const VocabEntry &other) const {
-    return hash < other.hash;
-  }
+  bool operator<(const VocabEntry &other) const { return hash < other.hash; }
 };
 
-int WriteVocabFile(const std::vector<VocabEntry> &vocab, util::scoped_fd &file) {
+int WriteVocabFile(const std::vector<VocabEntry> &vocab,
+                   util::scoped_fd &file) {
   file.reset(util::MakeTemp(util::DefaultTempDirectory()));
   {
     util::FileStream out(file.get(), 128);
-    for (std::vector<VocabEntry>::const_iterator i = vocab.begin(); i != vocab.end(); ++i) {
+    for (std::vector<VocabEntry>::const_iterator i = vocab.begin();
+         i != vocab.end(); ++i) {
       out << i->str << '\0';
     }
   }
@@ -57,38 +57,35 @@ int WriteVocabFile(StringPiece words, util::scoped_fd &file) {
 }
 
 class TestFiles {
-  public:
-    TestFiles() {}
-    int Test0() {
-      return WriteVocabFile("this\tis\ta\tfirst\tcut", test[0]);
-    }
-    int Test1() {
-      return WriteVocabFile("is this\tthis a\tfirst cut\ta first", test[1]);
-    }
-    int Test2() {
-      return WriteVocabFile("is\tsecd\ti", test[2]);
-    }
-    int NoUNK() {
-      std::vector<VocabEntry> no_unk_vec;
-      no_unk_vec.push_back(VocabEntry("toto"));
-      return WriteVocabFile(no_unk_vec, no_unk);
-    }
-    int BadOrder() {
-      std::vector<VocabEntry> bad_order_vec;
-      bad_order_vec.push_back(VocabEntry("<unk>"));
-      bad_order_vec.push_back(VocabEntry("0"));
-      bad_order_vec.push_back(VocabEntry("1"));
-      bad_order_vec.push_back(VocabEntry("2"));
-      bad_order_vec.push_back(VocabEntry("a"));
-      return WriteVocabFile(bad_order_vec, bad_order);
-    }
-  private:
-    util::scoped_fd test[3], no_unk, bad_order;
+public:
+  TestFiles() {}
+  int Test0() { return WriteVocabFile("this\tis\ta\tfirst\tcut", test[0]); }
+  int Test1() {
+    return WriteVocabFile("is this\tthis a\tfirst cut\ta first", test[1]);
+  }
+  int Test2() { return WriteVocabFile("is\tsecd\ti", test[2]); }
+  int NoUNK() {
+    std::vector<VocabEntry> no_unk_vec;
+    no_unk_vec.push_back(VocabEntry("toto"));
+    return WriteVocabFile(no_unk_vec, no_unk);
+  }
+  int BadOrder() {
+    std::vector<VocabEntry> bad_order_vec;
+    bad_order_vec.push_back(VocabEntry("<unk>"));
+    bad_order_vec.push_back(VocabEntry("0"));
+    bad_order_vec.push_back(VocabEntry("1"));
+    bad_order_vec.push_back(VocabEntry("2"));
+    bad_order_vec.push_back(VocabEntry("a"));
+    return WriteVocabFile(bad_order_vec, bad_order);
+  }
+
+private:
+  util::scoped_fd test[3], no_unk, bad_order;
 };
 
 class DoNothingEnumerate : public EnumerateVocab {
-  public:
-    void Add(WordIndex, const StringPiece &) {}
+public:
+  void Add(WordIndex, const StringPiece &) {}
 };
 
 BOOST_AUTO_TEST_CASE(MergeVocabTest) {
@@ -129,8 +126,10 @@ BOOST_AUTO_TEST_CASE(MergeVocabTest) {
 
   util::SeekOrThrow(combined.get(), 0);
   util::FilePiece f(combined.release());
-  std::vector<VocabEntry> expected = ParseVocab("a\tis this\tthis a\tfirst cut\tthis\ta first\tcut\tis\ti\tsecd\tfirst");
-  for (std::vector<VocabEntry>::const_iterator i = expected.begin(); i != expected.end(); ++i) {
+  std::vector<VocabEntry> expected = ParseVocab(
+      "a\tis this\tthis a\tfirst cut\tthis\ta first\tcut\tis\ti\tsecd\tfirst");
+  for (std::vector<VocabEntry>::const_iterator i = expected.begin();
+       i != expected.end(); ++i) {
     BOOST_CHECK_EQUAL(i->str, f.ReadLine('\0'));
   }
   BOOST_CHECK_THROW(f.ReadLine('\0'), util::EndOfFileException);
@@ -146,7 +145,8 @@ BOOST_AUTO_TEST_CASE(MergeVocabNoUnkTest) {
 
   UniversalVocab universal_vocab(model_max_idx);
   DoNothingEnumerate nothing;
-  BOOST_CHECK_THROW(MergeVocab(used_files, universal_vocab, nothing), FormatLoadException);
+  BOOST_CHECK_THROW(MergeVocab(used_files, universal_vocab, nothing),
+                    FormatLoadException);
 }
 
 BOOST_AUTO_TEST_CASE(MergeVocabWrongOrderTest) {
@@ -162,7 +162,10 @@ BOOST_AUTO_TEST_CASE(MergeVocabWrongOrderTest) {
 
   lm::interpolate::UniversalVocab universal_vocab(model_max_idx);
   DoNothingEnumerate nothing;
-  BOOST_CHECK_THROW(MergeVocab(used_files, universal_vocab, nothing), FormatLoadException);
+  BOOST_CHECK_THROW(MergeVocab(used_files, universal_vocab, nothing),
+                    FormatLoadException);
 }
 
-}}} // namespaces
+} // namespace
+} // namespace interpolate
+} // namespace lm

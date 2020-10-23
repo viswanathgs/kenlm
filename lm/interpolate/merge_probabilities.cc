@@ -14,7 +14,8 @@ namespace interpolate {
  * Helper to generate the BoundedSequenceEncoding used for writing the
  * from values.
  */
-BoundedSequenceEncoding MakeEncoder(const InterpolateInfo &info, uint8_t order) {
+BoundedSequenceEncoding MakeEncoder(const InterpolateInfo &info,
+                                    uint8_t order) {
   util::FixedArray<uint8_t> max_orders(info.orders.size());
   for (std::size_t i = 0; i < info.orders.size(); ++i) {
     max_orders.push_back(std::min(order, info.orders[i]));
@@ -38,8 +39,7 @@ class NGramHandler {
 public:
   NGramHandler(uint8_t order, const InterpolateInfo &ifo,
                util::FixedArray<util::stream::ChainPositions> &models_by_order)
-      : info(ifo),
-        encoder(MakeEncoder(info, order)),
+      : info(ifo), encoder(MakeEncoder(info, order)),
         out_record(order, encoder.EncodedLength()) {
     std::size_t count_has_order = 0;
     for (std::size_t i = 0; i < models_by_order.size(); ++i) {
@@ -74,21 +74,15 @@ public:
     std::size_t model;
   };
 
-  std::size_t ActiveSize() const {
-    return active_.size();
-  }
+  std::size_t ActiveSize() const { return active_.size(); }
 
   /**
    * @return the input stream for a particular model that corresponds to
    * this ngram order
    */
-  StreamIndex &operator[](std::size_t idx) {
-    return active_[idx];
-  }
+  StreamIndex &operator[](std::size_t idx) { return active_[idx]; }
 
-  void erase(std::size_t idx) {
-    active_.erase(active_.begin() + idx);
-  }
+  void erase(std::size_t idx) { active_.erase(active_.begin() + idx); }
 
   const InterpolateInfo &info;
   BoundedSequenceEncoding encoder;
@@ -107,12 +101,11 @@ private:
 class NGramHandlers : public util::FixedArray<NGramHandler> {
 public:
   explicit NGramHandlers(std::size_t num)
-      : util::FixedArray<NGramHandler>(num) {
-  }
+      : util::FixedArray<NGramHandler>(num) {}
 
-  void push_back(
-      std::size_t order, const InterpolateInfo &info,
-      util::FixedArray<util::stream::ChainPositions> &models_by_order) {
+  void
+  push_back(std::size_t order, const InterpolateInfo &info,
+            util::FixedArray<util::stream::ChainPositions> &models_by_order) {
     new (end()) NGramHandler(order, info, models_by_order);
     Constructed();
   }
@@ -141,10 +134,10 @@ void HandleSuffix(NGramHandlers &handlers, WordIndex *suffix_begin,
                   WordIndex *suffix_end,
                   const util::FixedArray<float> &fallback_probs,
                   const util::FixedArray<uint8_t> &fallback_from,
-                  float combined_fallback,
-                  util::stream::Streams &outputs) {
+                  float combined_fallback, util::stream::Streams &outputs) {
   uint8_t order = std::distance(suffix_begin, suffix_end) + 1;
-  if (order > outputs.size()) return;
+  if (order > outputs.size())
+    return;
 
   util::stream::Stream &output = outputs[order - 1];
   NGramHandler &handler = handlers[order - 1];
@@ -154,29 +147,36 @@ void HandleSuffix(NGramHandlers &handlers, WordIndex *suffix_begin,
     // TODO: priority queue driven.
     WordIndex *minimum = NULL;
     for (std::size_t i = 0; i < handler.ActiveSize(); ++i) {
-      if (!std::equal(suffix_begin, suffix_end, handler[i].Stream()->begin() + 1))
+      if (!std::equal(suffix_begin, suffix_end,
+                      handler[i].Stream()->begin() + 1))
         continue;
 
       // if we either haven't set a minimum yet or this one is smaller than
       // the minimum we found before, replace it
       WordIndex *last = handler[i].Stream()->begin();
-      if (!minimum || *last < *minimum) { minimum = handler[i].Stream()->begin(); }
+      if (!minimum || *last < *minimum) {
+        minimum = handler[i].Stream()->begin();
+      }
     }
 
     // no more ngrams of this order match our suffix, so we're done
-    if (!minimum) return;
+    if (!minimum)
+      return;
 
     handler.out_record.ReBase(output.Get());
     std::copy(minimum, minimum + order, handler.out_record.begin());
 
     // Default case is having backed off.
-    std::copy(fallback_probs.begin(), fallback_probs.end(), handler.probs.begin());
+    std::copy(fallback_probs.begin(), fallback_probs.end(),
+              handler.probs.begin());
     std::copy(fallback_from.begin(), fallback_from.end(), handler.from.begin());
 
     for (std::size_t i = 0; i < handler.ActiveSize();) {
       if (std::equal(handler.out_record.begin(), handler.out_record.end(),
                      handler[i].Stream()->begin())) {
-        handler.probs[handler[i].model] = handler.info.lambdas[handler[i].model] * handler[i].Stream()->Value().prob;
+        handler.probs[handler[i].model] =
+            handler.info.lambdas[handler[i].model] *
+            handler[i].Stream()->Value().prob;
         handler.from[handler[i].model] = order - 1;
         if (++handler[i].Stream()) {
           ++i;
@@ -187,7 +187,8 @@ void HandleSuffix(NGramHandlers &handlers, WordIndex *suffix_begin,
         ++i;
       }
     }
-    handler.out_record.Prob() = std::accumulate(handler.probs.begin(), handler.probs.end(), 0.0);
+    handler.out_record.Prob() =
+        std::accumulate(handler.probs.begin(), handler.probs.end(), 0.0);
     handler.out_record.LowerProb() = combined_fallback;
     handler.encoder.Encode(handler.from.begin(),
                            handler.out_record.FromBegin());
@@ -195,7 +196,8 @@ void HandleSuffix(NGramHandlers &handlers, WordIndex *suffix_begin,
     // we've handled this particular ngram, so now recurse to the higher
     // order using the current ngram as the suffix
     HandleSuffix(handlers, handler.out_record.begin(), handler.out_record.end(),
-                 handler.probs, handler.from, handler.out_record.Prob(), outputs);
+                 handler.probs, handler.from, handler.out_record.Prob(),
+                 outputs);
     // consume the output
     ++output;
   }
@@ -256,12 +258,13 @@ void HandleNGrams(NGramHandlers &handlers, util::stream::Streams &outputs) {
   // the two nulls are to encode that our "fallback" word is the "0-gram"
   // case, e.g. we "backed off" to UNK
   // TODO: stop generating vocab ids and LowerProb for unigrams.
-  HandleSuffix(handlers, NULL, NULL, unk_probs, unk_from, unk_combined, outputs);
+  HandleSuffix(handlers, NULL, NULL, unk_probs, unk_from, unk_combined,
+               outputs);
 
   // Verify we reached the end.  And poison!
   for (std::size_t i = 0; i < handlers.size(); ++i) {
     UTIL_THROW_IF2(handlers[i].ActiveSize(),
-                     "MergeProbabilities did not exhaust all ngram streams");
+                   "MergeProbabilities did not exhaust all ngram streams");
     outputs[i].Poison();
   }
 }
@@ -277,4 +280,5 @@ void MergeProbabilities::Run(const util::stream::ChainPositions &output_pos) {
   HandleNGrams(handlers, outputs);
 }
 
-}} // namespaces
+} // namespace interpolate
+} // namespace lm

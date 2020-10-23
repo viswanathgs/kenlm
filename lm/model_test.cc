@@ -4,11 +4,14 @@
 #include <cstring>
 
 #define BOOST_TEST_MODULE ModelTest
-#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/unit_test.hpp>
 
-// Apparently some Boost versions use templates and are pretty strict about types matching.
-#define SLOPPY_CHECK_CLOSE(ref, value, tol) BOOST_CHECK_CLOSE(static_cast<double>(ref), static_cast<double>(value), static_cast<double>(tol));
+// Apparently some Boost versions use templates and are pretty strict about
+// types matching.
+#define SLOPPY_CHECK_CLOSE(ref, value, tol)                                    \
+  BOOST_CHECK_CLOSE(static_cast<double>(ref), static_cast<double>(value),      \
+                    static_cast<double>(tol));
 
 namespace lm {
 namespace ngram {
@@ -39,7 +42,8 @@ const char *TestNoUnkLocation() {
   return argv[strstr(argv[1], "nounk") ? 1 : 2];
 }
 
-template <class Model> State GetState(const Model &model, const char *word, const State &in) {
+template <class Model>
+State GetState(const Model &model, const char *word, const State &in) {
   WordIndex context[in.length + 1];
   context[0] = model.GetVocabulary().Index(word);
   std::copy(in.words, in.words + in.length, context + 1);
@@ -48,20 +52,16 @@ template <class Model> State GetState(const Model &model, const char *word, cons
   return ret;
 }
 
-#define StartTest(word, ngram, score, indep_left) \
-  ret = model.FullScore( \
-      state, \
-      model.GetVocabulary().Index(word), \
-      out);\
-  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001); \
-  BOOST_CHECK_EQUAL(static_cast<unsigned int>(ngram), ret.ngram_length); \
-  BOOST_CHECK_GE(std::min<unsigned char>(ngram, 5 - 1), out.length); \
-  BOOST_CHECK_EQUAL(indep_left, ret.independent_left); \
+#define StartTest(word, ngram, score, indep_left)                              \
+  ret = model.FullScore(state, model.GetVocabulary().Index(word), out);        \
+  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001);                                  \
+  BOOST_CHECK_EQUAL(static_cast<unsigned int>(ngram), ret.ngram_length);       \
+  BOOST_CHECK_GE(std::min<unsigned char>(ngram, 5 - 1), out.length);           \
+  BOOST_CHECK_EQUAL(indep_left, ret.independent_left);                         \
   BOOST_CHECK_EQUAL(out, GetState(model, word, state));
 
-#define AppendTest(word, ngram, score, indep_left) \
-  StartTest(word, ngram, score, indep_left) \
-  state = out;
+#define AppendTest(word, ngram, score, indep_left)                             \
+  StartTest(word, ngram, score, indep_left) state = out;
 
 template <class M> void Starters(const M &model) {
   FullScoreReturn ret;
@@ -134,7 +134,7 @@ template <class M> void Blanks(const M &model) {
   state = model.NullContextState();
   AppendTest("would", 1, -1.687872, false);
   BOOST_CHECK_EQUAL(1, state.length);
-  AppendTest("consider", 2, -1.687872 -0.30103, false);
+  AppendTest("consider", 2, -1.687872 - 0.30103, false);
   BOOST_CHECK_EQUAL(2, state.length);
   AppendTest("higher", 3, -1.509559 - 0.30103, false);
   BOOST_CHECK_EQUAL(3, state.length);
@@ -181,13 +181,15 @@ template <class M> void MinimalState(const M &model) {
 
 template <class M> void ExtendLeftTest(const M &model) {
   State right;
-  FullScoreReturn little(model.FullScore(model.NullContextState(), model.GetVocabulary().Index("little"), right));
+  FullScoreReturn little(model.FullScore(
+      model.NullContextState(), model.GetVocabulary().Index("little"), right));
   const float kLittleProb = -1.285941;
   SLOPPY_CHECK_CLOSE(kLittleProb, little.prob, 0.001);
   unsigned char next_use;
   float backoff_out[4];
 
-  FullScoreReturn extend_none(model.ExtendLeft(NULL, NULL, NULL, little.extend_left, 1, NULL, next_use));
+  FullScoreReturn extend_none(model.ExtendLeft(
+      NULL, NULL, NULL, little.extend_left, 1, NULL, next_use));
   BOOST_CHECK_EQUAL(0, next_use);
   BOOST_CHECK_EQUAL(little.extend_left, extend_none.extend_left);
   SLOPPY_CHECK_CLOSE(little.prob - little.rest, extend_none.prob, 0.001);
@@ -196,7 +198,8 @@ template <class M> void ExtendLeftTest(const M &model) {
   const WordIndex a = model.GetVocabulary().Index("a");
   float backoff_in = 3.14;
   // a little
-  FullScoreReturn extend_a(model.ExtendLeft(&a, &a + 1, &backoff_in, little.extend_left, 1, backoff_out, next_use));
+  FullScoreReturn extend_a(model.ExtendLeft(
+      &a, &a + 1, &backoff_in, little.extend_left, 1, backoff_out, next_use));
   BOOST_CHECK_EQUAL(1, next_use);
   SLOPPY_CHECK_CLOSE(-0.69897, backoff_out[0], 0.001);
   SLOPPY_CHECK_CLOSE(-0.09132547 - little.rest, extend_a.prob, 0.001);
@@ -204,16 +207,21 @@ template <class M> void ExtendLeftTest(const M &model) {
   BOOST_CHECK(!extend_a.independent_left);
 
   const WordIndex on = model.GetVocabulary().Index("on");
-  FullScoreReturn extend_on(model.ExtendLeft(&on, &on + 1, &backoff_in, extend_a.extend_left, 2, backoff_out, next_use));
+  FullScoreReturn extend_on(model.ExtendLeft(&on, &on + 1, &backoff_in,
+                                             extend_a.extend_left, 2,
+                                             backoff_out, next_use));
   BOOST_CHECK_EQUAL(1, next_use);
   SLOPPY_CHECK_CLOSE(-0.4771212, backoff_out[0], 0.001);
-  SLOPPY_CHECK_CLOSE(-0.0283603 - (extend_a.rest + little.rest), extend_on.prob, 0.001);
+  SLOPPY_CHECK_CLOSE(-0.0283603 - (extend_a.rest + little.rest), extend_on.prob,
+                     0.001);
   BOOST_CHECK_EQUAL(3, extend_on.ngram_length);
   BOOST_CHECK(!extend_on.independent_left);
 
   const WordIndex both[2] = {a, on};
   float backoff_in_arr[4];
-  FullScoreReturn extend_both(model.ExtendLeft(both, both + 2, backoff_in_arr, little.extend_left, 1, backoff_out, next_use));
+  FullScoreReturn extend_both(model.ExtendLeft(both, both + 2, backoff_in_arr,
+                                               little.extend_left, 1,
+                                               backoff_out, next_use));
   BOOST_CHECK_EQUAL(2, next_use);
   SLOPPY_CHECK_CLOSE(-0.69897, backoff_out[0], 0.001);
   SLOPPY_CHECK_CLOSE(-0.4771212, backoff_out[1], 0.001);
@@ -223,20 +231,25 @@ template <class M> void ExtendLeftTest(const M &model) {
   BOOST_CHECK_EQUAL(extend_on.extend_left, extend_both.extend_left);
 }
 
-#define StatelessTest(word, provide, ngram, score) \
-  ret = model.FullScoreForgotState(indices + num_words - word, indices + num_words - word + provide, indices[num_words - word - 1], state); \
-  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001); \
-  BOOST_CHECK_EQUAL(static_cast<unsigned int>(ngram), ret.ngram_length); \
-  model.GetState(indices + num_words - word, indices + num_words - word + provide, before); \
-  ret = model.FullScore(before, indices[num_words - word - 1], out); \
-  BOOST_CHECK(state == out); \
-  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001); \
+#define StatelessTest(word, provide, ngram, score)                             \
+  ret = model.FullScoreForgotState(indices + num_words - word,                 \
+                                   indices + num_words - word + provide,       \
+                                   indices[num_words - word - 1], state);      \
+  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001);                                  \
+  BOOST_CHECK_EQUAL(static_cast<unsigned int>(ngram), ret.ngram_length);       \
+  model.GetState(indices + num_words - word,                                   \
+                 indices + num_words - word + provide, before);                \
+  ret = model.FullScore(before, indices[num_words - word - 1], out);           \
+  BOOST_CHECK(state == out);                                                   \
+  SLOPPY_CHECK_CLOSE(score, ret.prob, 0.001);                                  \
   BOOST_CHECK_EQUAL(static_cast<unsigned int>(ngram), ret.ngram_length);
 
 template <class M> void Stateless(const M &model) {
-  const char *words[] = {"<s>", "looking", "on", "a", "little", "the", "biarritz", "not_found", "more", ".", "</s>"};
-  const size_t num_words = sizeof(words) / sizeof(const char*);
-  // Silience "array subscript is above array bounds" when extracting end pointer.
+  const char *words[] = {"<s>",      "looking",   "on",   "a", "little", "the",
+                         "biarritz", "not_found", "more", ".", "</s>"};
+  const size_t num_words = sizeof(words) / sizeof(const char *);
+  // Silience "array subscript is above array bounds" when extracting end
+  // pointer.
   WordIndex indices[num_words + 1];
   for (unsigned int i = 0; i < num_words; ++i) {
     indices[num_words - 1 - i] = model.GetVocabulary().Index(words[i]);
@@ -244,7 +257,8 @@ template <class M> void Stateless(const M &model) {
   FullScoreReturn ret;
   State state, out, before;
 
-  ret = model.FullScoreForgotState(indices + num_words - 1, indices + num_words, indices[num_words - 2], state);
+  ret = model.FullScoreForgotState(indices + num_words - 1, indices + num_words,
+                                   indices[num_words - 2], state);
   SLOPPY_CHECK_CLOSE(-0.484652, ret.prob, 0.001);
   StatelessTest(1, 1, 2, -0.484652);
 
@@ -282,7 +296,8 @@ template <class M> void NoUnkCheck(const M &model) {
   WordIndex unk_index = 0;
   State state;
 
-  FullScoreReturn ret = model.FullScoreForgotState(&unk_index, &unk_index + 1, unk_index, state);
+  FullScoreReturn ret =
+      model.FullScoreForgotState(&unk_index, &unk_index + 1, unk_index, state);
   SLOPPY_CHECK_CLOSE(-100.0, ret.prob, 0.001);
 }
 
@@ -297,28 +312,26 @@ template <class M> void Everything(const M &m) {
 }
 
 class ExpectEnumerateVocab : public EnumerateVocab {
-  public:
-    ExpectEnumerateVocab() {}
+public:
+  ExpectEnumerateVocab() {}
 
-    void Add(WordIndex index, const StringPiece &str) {
-      BOOST_CHECK_EQUAL(seen.size(), index);
-      seen.push_back(std::string(str.data(), str.length()));
+  void Add(WordIndex index, const StringPiece &str) {
+    BOOST_CHECK_EQUAL(seen.size(), index);
+    seen.push_back(std::string(str.data(), str.length()));
+  }
+
+  void Check(const base::Vocabulary &vocab) {
+    BOOST_CHECK_EQUAL(37ULL, seen.size());
+    BOOST_REQUIRE(!seen.empty());
+    BOOST_CHECK_EQUAL("<unk>", seen[0]);
+    for (WordIndex i = 0; i < seen.size(); ++i) {
+      BOOST_CHECK_EQUAL(i, vocab.Index(seen[i]));
     }
+  }
 
-    void Check(const base::Vocabulary &vocab) {
-      BOOST_CHECK_EQUAL(37ULL, seen.size());
-      BOOST_REQUIRE(!seen.empty());
-      BOOST_CHECK_EQUAL("<unk>", seen[0]);
-      for (WordIndex i = 0; i < seen.size(); ++i) {
-        BOOST_CHECK_EQUAL(i, vocab.Index(seen[i]));
-      }
-    }
+  void Clear() { seen.clear(); }
 
-    void Clear() {
-      seen.clear();
-    }
-
-    std::vector<std::string> seen;
+  std::vector<std::string> seen;
 };
 
 template <class ModelT> void LoadingTest() {
@@ -344,21 +357,11 @@ template <class ModelT> void LoadingTest() {
   }
 }
 
-BOOST_AUTO_TEST_CASE(probing) {
-  LoadingTest<Model>();
-}
-BOOST_AUTO_TEST_CASE(trie) {
-  LoadingTest<TrieModel>();
-}
-BOOST_AUTO_TEST_CASE(quant_trie) {
-  LoadingTest<QuantTrieModel>();
-}
-BOOST_AUTO_TEST_CASE(bhiksha_trie) {
-  LoadingTest<ArrayTrieModel>();
-}
-BOOST_AUTO_TEST_CASE(quant_bhiksha_trie) {
-  LoadingTest<QuantArrayTrieModel>();
-}
+BOOST_AUTO_TEST_CASE(probing) { LoadingTest<Model>(); }
+BOOST_AUTO_TEST_CASE(trie) { LoadingTest<TrieModel>(); }
+BOOST_AUTO_TEST_CASE(quant_trie) { LoadingTest<QuantTrieModel>(); }
+BOOST_AUTO_TEST_CASE(bhiksha_trie) { LoadingTest<ArrayTrieModel>(); }
+BOOST_AUTO_TEST_CASE(quant_bhiksha_trie) { LoadingTest<QuantArrayTrieModel>(); }
 
 template <class ModelT> void BinaryTest(Config::WriteMethod write_method) {
   Config config;
@@ -412,15 +415,11 @@ template <class ModelT> void BinaryTest() {
   BinaryTest<ModelT>(Config::WRITE_AFTER);
 }
 
-BOOST_AUTO_TEST_CASE(write_and_read_probing) {
-  BinaryTest<ProbingModel>();
-}
+BOOST_AUTO_TEST_CASE(write_and_read_probing) { BinaryTest<ProbingModel>(); }
 BOOST_AUTO_TEST_CASE(write_and_read_rest_probing) {
   BinaryTest<RestProbingModel>();
 }
-BOOST_AUTO_TEST_CASE(write_and_read_trie) {
-  BinaryTest<TrieModel>();
-}
+BOOST_AUTO_TEST_CASE(write_and_read_trie) { BinaryTest<TrieModel>(); }
 BOOST_AUTO_TEST_CASE(write_and_read_quant_trie) {
   BinaryTest<QuantTrieModel>();
 }
@@ -438,9 +437,13 @@ BOOST_AUTO_TEST_CASE(rest_max) {
 
   RestProbingModel model(TestLocation(), config);
   State state, out;
-  FullScoreReturn ret(model.FullScore(model.NullContextState(), model.GetVocabulary().Index("."), state));
+  FullScoreReturn ret(model.FullScore(model.NullContextState(),
+                                      model.GetVocabulary().Index("."), state));
   SLOPPY_CHECK_CLOSE(-0.2705918, ret.rest, 0.001);
-  SLOPPY_CHECK_CLOSE(-0.01916512, model.FullScore(state, model.GetVocabulary().EndSentence(), out).rest, 0.001);
+  SLOPPY_CHECK_CLOSE(
+      -0.01916512,
+      model.FullScore(state, model.GetVocabulary().EndSentence(), out).rest,
+      0.001);
 }
 
 } // namespace

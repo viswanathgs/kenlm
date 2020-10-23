@@ -6,18 +6,22 @@
 #include <vector>
 
 #define BOOST_TEST_MODULE LeftTest
-#include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/unit_test.hpp>
 
 namespace lm {
 namespace ngram {
 namespace {
 
 #define Term(word) score.Terminal(m.GetVocabulary().Index(word));
-#define VCheck(word, value) BOOST_CHECK_EQUAL(m.GetVocabulary().Index(word), value);
+#define VCheck(word, value)                                                    \
+  BOOST_CHECK_EQUAL(m.GetVocabulary().Index(word), value);
 
-// Apparently some Boost versions use templates and are pretty strict about types matching.
-#define SLOPPY_CHECK_CLOSE(ref, value, tol) BOOST_CHECK_CLOSE(static_cast<double>(ref), static_cast<double>(value), static_cast<double>(tol));
+// Apparently some Boost versions use templates and are pretty strict about
+// types matching.
+#define SLOPPY_CHECK_CLOSE(ref, value, tol)                                    \
+  BOOST_CHECK_CLOSE(static_cast<double>(ref), static_cast<double>(value),      \
+                    static_cast<double>(tol));
 
 template <class M> void Short(const M &m) {
   ChartState base;
@@ -50,7 +54,8 @@ template <class M> void Short(const M &m) {
     RuleScore<M> score(m, shorter);
     Term("to");
     score.NonTerminal(base, -1.206319 - 0.3561665);
-    SLOPPY_CHECK_CLOSE(-0.30103 - 1.687872 - 1.206319 - 0.3561665, score.Finish(), 0.01);
+    SLOPPY_CHECK_CLOSE(-0.30103 - 1.687872 - 1.206319 - 0.3561665,
+                       score.Finish(), 0.01);
   }
   BOOST_CHECK_EQUAL(1, shorter.left.length);
   BOOST_CHECK_EQUAL(1, shorter.right.length);
@@ -64,7 +69,7 @@ template <class M> void Charge(const M &m) {
     RuleScore<M> score(m, base);
     Term("on");
     Term("more");
-    SLOPPY_CHECK_CLOSE(-1.509559 -0.4771212 -1.206319, score.Finish(), 0.001);
+    SLOPPY_CHECK_CLOSE(-1.509559 - 0.4771212 - 1.206319, score.Finish(), 0.001);
   }
   BOOST_CHECK_EQUAL(1, base.left.length);
   BOOST_CHECK_EQUAL(1, base.right.length);
@@ -75,7 +80,7 @@ template <class M> void Charge(const M &m) {
   {
     RuleScore<M> score(m, extend);
     Term("looking");
-    score.NonTerminal(base, -1.509559 -0.4771212 -1.206319);
+    score.NonTerminal(base, -1.509559 - 0.4771212 - 1.206319);
     SLOPPY_CHECK_CLOSE(-3.91039, score.Finish(), 0.001);
   }
   BOOST_CHECK_EQUAL(2, extend.left.length);
@@ -94,23 +99,29 @@ template <class M> void Charge(const M &m) {
   BOOST_CHECK_EQUAL(1, tobos.right.length);
 }
 
-template <class M> float LeftToRight(const M &m, const std::vector<WordIndex> &words, bool begin_sentence = false) {
+template <class M>
+float LeftToRight(const M &m, const std::vector<WordIndex> &words,
+                  bool begin_sentence = false) {
   float ret = 0.0;
   State right = begin_sentence ? m.BeginSentenceState() : m.NullContextState();
-  for (std::vector<WordIndex>::const_iterator i = words.begin(); i != words.end(); ++i) {
+  for (std::vector<WordIndex>::const_iterator i = words.begin();
+       i != words.end(); ++i) {
     State copy(right);
     ret += m.Score(copy, *i, right);
   }
   return ret;
 }
 
-template <class M> float RightToLeft(const M &m, const std::vector<WordIndex> &words, bool begin_sentence = false) {
+template <class M>
+float RightToLeft(const M &m, const std::vector<WordIndex> &words,
+                  bool begin_sentence = false) {
   float ret = 0.0;
   ChartState state;
   state.left.length = 0;
   state.right.length = 0;
   state.left.full = false;
-  for (std::vector<WordIndex>::const_reverse_iterator i = words.rbegin(); i != words.rend(); ++i) {
+  for (std::vector<WordIndex>::const_reverse_iterator i = words.rbegin();
+       i != words.rend(); ++i) {
     ChartState copy(state);
     RuleScore<M> score(m, state);
     score.Terminal(*i);
@@ -127,7 +138,9 @@ template <class M> float RightToLeft(const M &m, const std::vector<WordIndex> &w
   return ret;
 }
 
-template <class M> float TreeMiddle(const M &m, const std::vector<WordIndex> &words, bool begin_sentence = false) {
+template <class M>
+float TreeMiddle(const M &m, const std::vector<WordIndex> &words,
+                 bool begin_sentence = false) {
   std::vector<std::pair<ChartState, float> > states(words.size());
   for (unsigned int i = 0; i < words.size(); ++i) {
     RuleScore<M> score(m, states[i].first);
@@ -138,8 +151,8 @@ template <class M> float TreeMiddle(const M &m, const std::vector<WordIndex> &wo
     std::vector<std::pair<ChartState, float> > upper((states.size() + 1) / 2);
     for (unsigned int i = 0; i < states.size() / 2; ++i) {
       RuleScore<M> score(m, upper[i].first);
-      score.NonTerminal(states[i*2].first, states[i*2].second);
-      score.NonTerminal(states[i*2+1].first, states[i*2+1].second);
+      score.NonTerminal(states[i * 2].first, states[i * 2].second);
+      score.NonTerminal(states[i * 2 + 1].first, states[i * 2 + 1].second);
       upper[i].second = score.Finish();
     }
     if (states.size() % 2) {
@@ -148,7 +161,8 @@ template <class M> float TreeMiddle(const M &m, const std::vector<WordIndex> &wo
     std::swap(states, upper);
   }
 
-  if (states.empty()) return 0.0;
+  if (states.empty())
+    return 0.0;
 
   if (begin_sentence) {
     ChartState ignored;
@@ -159,28 +173,32 @@ template <class M> float TreeMiddle(const M &m, const std::vector<WordIndex> &wo
   } else {
     return states.front().second;
   }
-
 }
 
-template <class M> void LookupVocab(const M &m, const StringPiece &str, std::vector<WordIndex> &out) {
+template <class M>
+void LookupVocab(const M &m, const StringPiece &str,
+                 std::vector<WordIndex> &out) {
   out.clear();
   for (util::TokenIter<util::SingleCharacter, true> i(str, ' '); i; ++i) {
     out.push_back(m.GetVocabulary().Index(*i));
   }
 }
 
-#define TEXT_TEST(str) \
-  LookupVocab(m, str, words); \
-  expect = LeftToRight(m, words, rest); \
-  SLOPPY_CHECK_CLOSE(expect, RightToLeft(m, words, rest), 0.001); \
-  SLOPPY_CHECK_CLOSE(expect, TreeMiddle(m, words, rest), 0.001); \
+#define TEXT_TEST(str)                                                         \
+  LookupVocab(m, str, words);                                                  \
+  expect = LeftToRight(m, words, rest);                                        \
+  SLOPPY_CHECK_CLOSE(expect, RightToLeft(m, words, rest), 0.001);              \
+  SLOPPY_CHECK_CLOSE(expect, TreeMiddle(m, words, rest), 0.001);
 
 // Build sentences, or parts thereof, from right to left.
 template <class M> void GrowBig(const M &m, bool rest = false) {
   std::vector<WordIndex> words;
   float expect;
-  TEXT_TEST("in biarritz watching considering looking . on a little more loin also would consider higher to look good unknown the screening foo bar , unknown however unknown </s>");
-  TEXT_TEST("on a little more loin also would consider higher to look good unknown the screening foo bar , unknown however unknown </s>");
+  TEXT_TEST("in biarritz watching considering looking . on a little more loin "
+            "also would consider higher to look good unknown the screening foo "
+            "bar , unknown however unknown </s>");
+  TEXT_TEST("on a little more loin also would consider higher to look good "
+            "unknown the screening foo bar , unknown however unknown </s>");
   TEXT_TEST("on a little more loin also would consider higher to look good");
   TEXT_TEST("more loin also would consider higher to look good");
   TEXT_TEST("more loin also would consider higher to look");
@@ -275,13 +293,13 @@ template <class M> void AlsoWouldConsiderHigher(const M &m) {
   BOOST_CHECK_EQUAL(4, full.right.length);
 }
 
-#define CHECK_SCORE(str, val) \
-{ \
-  float got = val; \
-  std::vector<WordIndex> indices; \
-  LookupVocab(m, str, indices); \
-  SLOPPY_CHECK_CLOSE(LeftToRight(m, indices), got, 0.001); \
-}
+#define CHECK_SCORE(str, val)                                                  \
+  {                                                                            \
+    float got = val;                                                           \
+    std::vector<WordIndex> indices;                                            \
+    LookupVocab(m, str, indices);                                              \
+    SLOPPY_CHECK_CLOSE(LeftToRight(m, indices), got, 0.001);                   \
+  }
 
 template <class M> void FullGrow(const M &m) {
   std::vector<WordIndex> words;
@@ -329,7 +347,8 @@ template <class M> void FullGrow(const M &m) {
     RuleScore<M> score(m, l2[0]);
     score.NonTerminal(l1[0], l1_scores[0]);
     score.NonTerminal(l1[1], l1_scores[1]);
-    CHECK_SCORE("in biarritz watching considering", l2_scores[0] = score.Finish());
+    CHECK_SCORE("in biarritz watching considering",
+                l2_scores[0] = score.Finish());
   }
   {
     RuleScore<M> score(m, l2[1]);
@@ -345,7 +364,8 @@ template <class M> void FullGrow(const M &m) {
     RuleScore<M> score(m, top);
     score.NonTerminal(l2[0], l2_scores[0]);
     score.NonTerminal(l2[1], l2_scores[1]);
-    CHECK_SCORE("in biarritz watching considering looking . </s>", score.Finish());
+    CHECK_SCORE("in biarritz watching considering looking . </s>",
+                score.Finish());
   }
 }
 
@@ -369,21 +389,11 @@ template <class M> void Everything() {
   FullGrow(m);
 }
 
-BOOST_AUTO_TEST_CASE(ProbingAll) {
-  Everything<Model>();
-}
-BOOST_AUTO_TEST_CASE(TrieAll) {
-  Everything<TrieModel>();
-}
-BOOST_AUTO_TEST_CASE(QuantTrieAll) {
-  Everything<QuantTrieModel>();
-}
-BOOST_AUTO_TEST_CASE(ArrayQuantTrieAll) {
-  Everything<QuantArrayTrieModel>();
-}
-BOOST_AUTO_TEST_CASE(ArrayTrieAll) {
-  Everything<ArrayTrieModel>();
-}
+BOOST_AUTO_TEST_CASE(ProbingAll) { Everything<Model>(); }
+BOOST_AUTO_TEST_CASE(TrieAll) { Everything<TrieModel>(); }
+BOOST_AUTO_TEST_CASE(QuantTrieAll) { Everything<QuantTrieModel>(); }
+BOOST_AUTO_TEST_CASE(ArrayQuantTrieAll) { Everything<QuantArrayTrieModel>(); }
+BOOST_AUTO_TEST_CASE(ArrayTrieAll) { Everything<ArrayTrieModel>(); }
 
 BOOST_AUTO_TEST_CASE(RestProbing) {
   Config config;

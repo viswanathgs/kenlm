@@ -2,23 +2,22 @@
 
 #include "util/exception.hh"
 
+#include <cctype>
+#include <cstring>
+#include <ctime>
 #include <fstream>
 #include <ostream>
-#include <sstream>
 #include <set>
+#include <sstream>
 #include <string>
-#include <cstring>
-#include <cctype>
-#include <ctime>
 #if defined(_WIN32) || defined(_WIN64)
 // This code lifted from physmem.c in gnulib.  See the copyright statement
 // below.
-# define WIN32_LEAN_AND_MEAN
-# include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 /*  MEMORYSTATUSEX is missing from older windows headers, so define
     a local replacement.  */
-typedef struct
-{
+typedef struct {
   DWORD dwLength;
   DWORD dwMemoryLoad;
   DWORDLONG ullTotalPhys;
@@ -31,7 +30,7 @@ typedef struct
 } lMEMORYSTATUSEX;
 // Is this really supposed to be defined like this?
 typedef int WINBOOL;
-typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+typedef WINBOOL(WINAPI *PFN_MS_EX)(lMEMORYSTATUSEX *);
 #else
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -39,10 +38,10 @@ typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
 #endif
 
 #if defined(__MACH__) || defined(__APPLE__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/task.h>
 #include <mach/mach.h>
+#include <mach/task.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #endif
 
 namespace util {
@@ -57,27 +56,28 @@ Wall GetWall() {
 }
 #elif defined(_WIN32) || defined(_WIN64)
 typedef time_t Wall;
-Wall GetWall() {
-  return time(NULL);
-}
+Wall GetWall() { return time(NULL); }
 #else
 typedef struct timespec Wall;
 Wall GetWall() {
   Wall ret;
-  UTIL_THROW_IF(-1 == clock_gettime(CLOCK_MONOTONIC, &ret), ErrnoException, "Could not get wall time");
+  UTIL_THROW_IF(-1 == clock_gettime(CLOCK_MONOTONIC, &ret), ErrnoException,
+                "Could not get wall time");
   return ret;
 }
 #endif
 
 // gcc possible-unused function flags
 #ifdef __GNUC__
-double Subtract(time_t first, time_t second) __attribute__ ((unused));
-double DoubleSec(time_t tv) __attribute__ ((unused));
+double Subtract(time_t first, time_t second) __attribute__((unused));
+double DoubleSec(time_t tv) __attribute__((unused));
 #if !defined(_WIN32) && !defined(_WIN64)
-double Subtract(const struct timeval &first, const struct timeval &second) __attribute__ ((unused));
-double Subtract(const struct timespec &first, const struct timespec &second) __attribute__ ((unused));
-double DoubleSec(const struct timeval &tv) __attribute__ ((unused));
-double DoubleSec(const struct timespec &tv) __attribute__ ((unused));
+double Subtract(const struct timeval &first, const struct timeval &second)
+    __attribute__((unused));
+double Subtract(const struct timespec &first, const struct timespec &second)
+    __attribute__((unused));
+double DoubleSec(const struct timeval &tv) __attribute__((unused));
+double DoubleSec(const struct timespec &tv) __attribute__((unused));
 #endif
 #endif
 
@@ -87,24 +87,24 @@ double DoubleSec(const struct timespec &tv) __attribute__ ((unused));
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 // These all assume first > second
-double Subtract(time_t first, time_t second) {
-  return difftime(first, second);
-}
-double DoubleSec(time_t tv) {
-  return static_cast<double>(tv);
-}
+double Subtract(time_t first, time_t second) { return difftime(first, second); }
+double DoubleSec(time_t tv) { return static_cast<double>(tv); }
 #if !defined(_WIN32) && !defined(_WIN64)
 double Subtract(const struct timeval &first, const struct timeval &second) {
-  return static_cast<double>(first.tv_sec - second.tv_sec) + static_cast<double>(first.tv_usec - second.tv_usec) / 1000000.0;
+  return static_cast<double>(first.tv_sec - second.tv_sec) +
+         static_cast<double>(first.tv_usec - second.tv_usec) / 1000000.0;
 }
 double Subtract(const struct timespec &first, const struct timespec &second) {
-  return static_cast<double>(first.tv_sec - second.tv_sec) + static_cast<double>(first.tv_nsec - second.tv_nsec) / 1000000000.0;
+  return static_cast<double>(first.tv_sec - second.tv_sec) +
+         static_cast<double>(first.tv_nsec - second.tv_nsec) / 1000000000.0;
 }
 double DoubleSec(const struct timeval &tv) {
-  return static_cast<double>(tv.tv_sec) + (static_cast<double>(tv.tv_usec) / 1000000.0);
+  return static_cast<double>(tv.tv_sec) +
+         (static_cast<double>(tv.tv_usec) / 1000000.0);
 }
 double DoubleSec(const struct timespec &tv) {
-  return static_cast<double>(tv.tv_sec) + (static_cast<double>(tv.tv_nsec) / 1000000000.0);
+  return static_cast<double>(tv.tv_sec) +
+         (static_cast<double>(tv.tv_nsec) / 1000000000.0);
 }
 #endif
 #ifdef __clang__
@@ -112,41 +112,38 @@ double DoubleSec(const struct timespec &tv) {
 #endif
 
 class RecordStart {
-  public:
-    RecordStart() {
-      started_ = GetWall();
-    }
+public:
+  RecordStart() { started_ = GetWall(); }
 
-    const Wall &Started() const {
-      return started_;
-    }
+  const Wall &Started() const { return started_; }
 
-  private:
-    Wall started_;
+private:
+  Wall started_;
 };
 
 const RecordStart kRecordStart;
 
 const char *SkipSpaces(const char *at) {
-  for (; *at == ' ' || *at == '\t'; ++at) {}
+  for (; *at == ' ' || *at == '\t'; ++at) {
+  }
   return at;
 }
 } // namespace
 
-double WallTime() {
-  return Subtract(GetWall(), kRecordStart.Started());
-}
+double WallTime() { return Subtract(GetWall(), kRecordStart.Started()); }
 
 double CPUTime() {
 #if defined(_WIN32) || defined(_WIN64)
   return 0.0;
 #elif defined(__MACH__) || defined(__FreeBSD__) || defined(__APPLE__)
   struct rusage usage;
-  UTIL_THROW_IF(getrusage(RUSAGE_SELF, &usage), ErrnoException, "getrusage failed");
+  UTIL_THROW_IF(getrusage(RUSAGE_SELF, &usage), ErrnoException,
+                "getrusage failed");
   return DoubleSec(usage.ru_utime) + DoubleSec(usage.ru_stime);
 #else
   struct timespec usage;
-  UTIL_THROW_IF(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &usage), ErrnoException, "clock_gettime failed?!"); 
+  UTIL_THROW_IF(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &usage), ErrnoException,
+                "clock_gettime failed?!");
   return DoubleSec(usage);
 #endif
 }
@@ -159,7 +156,9 @@ double ThreadTime() {
   FILETIME c_time, e_time;
 
   HANDLE this_thread = GetCurrentThread();
-  UTIL_THROW_IF(!GetThreadTimes(this_thread, &c_time, &e_time, &sys_time, &user_time), WindowsException, "GetThreadTime");
+  UTIL_THROW_IF(
+      !GetThreadTimes(this_thread, &c_time, &e_time, &sys_time, &user_time),
+      WindowsException, "GetThreadTime");
   // Convert LPFILETIME to 64-bit number, and from there to double.
   ULARGE_INTEGER sys_ticks, user_ticks;
   sys_ticks.LowPart = sys_time.dwLowDateTime;
@@ -172,13 +171,15 @@ double ThreadTime() {
   return ticks / (10 * 1000 * 1000);
 #elif defined(__MACH__) || defined(__APPLE__)
   struct task_basic_info t_info;
-  mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;  
-  task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count);
-  
+  mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+  task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info,
+            &t_info_count);
+
   return 0.0;
 #else
   struct timespec usage;
-  UTIL_THROW_IF(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &usage), ErrnoException, "clock_gettime failed?!"); 
+  UTIL_THROW_IF(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &usage), ErrnoException,
+                "clock_gettime failed?!");
   return DoubleSec(usage);
 #endif
 }
@@ -216,7 +217,8 @@ void PrintUsage(std::ostream &out) {
     return;
   }
   out << "RSSMax:" << usage.ru_maxrss << " kB" << '\t';
-  out << "user:" << DoubleSec(usage.ru_utime) << "\tsys:" << DoubleSec(usage.ru_stime) << '\t';
+  out << "user:" << DoubleSec(usage.ru_utime)
+      << "\tsys:" << DoubleSec(usage.ru_stime) << '\t';
   out << "CPU:" << CPUTime() << '\t';
 #endif
 
@@ -256,10 +258,11 @@ uint64_t GuessPhysicalMemory() {
   { /* This works on *bsd and darwin.  */
     unsigned int physmem;
     size_t len = sizeof physmem;
-    static int mib[2] = { CTL_HW, HW_PHYSMEM };
+    static int mib[2] = {CTL_HW, HW_PHYSMEM};
 
-    if (sysctl (mib, sizeof(mib) / sizeof(mib[0]), &physmem, &len, NULL, 0) == 0
-        && len == sizeof (physmem))
+    if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &physmem, &len, NULL, 0) ==
+            0 &&
+        len == sizeof(physmem))
       return static_cast<uint64_t>(physmem);
   }
 #endif
@@ -267,29 +270,27 @@ uint64_t GuessPhysicalMemory() {
 #if defined(_WIN32) || defined(_WIN64)
   { /* this works on windows */
     PFN_MS_EX pfnex;
-    HMODULE h = GetModuleHandle (TEXT("kernel32.dll"));
+    HMODULE h = GetModuleHandle(TEXT("kernel32.dll"));
 
     if (!h)
       return 0;
 
     /*  Use GlobalMemoryStatusEx if available.  */
-    if ((pfnex = (PFN_MS_EX) GetProcAddress (h, "GlobalMemoryStatusEx")))
-      {
-        lMEMORYSTATUSEX lms_ex;
-        lms_ex.dwLength = sizeof lms_ex;
-        if (!pfnex (&lms_ex))
-          return 0;
-        return lms_ex.ullTotalPhys;
-      }
+    if ((pfnex = (PFN_MS_EX)GetProcAddress(h, "GlobalMemoryStatusEx"))) {
+      lMEMORYSTATUSEX lms_ex;
+      lms_ex.dwLength = sizeof lms_ex;
+      if (!pfnex(&lms_ex))
+        return 0;
+      return lms_ex.ullTotalPhys;
+    }
 
     /*  Fall back to GlobalMemoryStatus which is always available.
         but returns wrong results for physical memory > 4GB.  */
-    else
-      {
-        MEMORYSTATUS ms;
-        GlobalMemoryStatus (&ms);
-        return ms.dwTotalPhys;
-      }
+    else {
+      MEMORYSTATUS ms;
+      GlobalMemoryStatus(&ms);
+      return ms.dwTotalPhys;
+    }
   }
 #endif
   return 0;
@@ -297,10 +298,10 @@ uint64_t GuessPhysicalMemory() {
 
 namespace {
 class SizeParseError : public Exception {
-  public:
-    explicit SizeParseError(const std::string &str) throw() {
-      *this << "Failed to parse " << str << " into a memory size ";
-    }
+public:
+  explicit SizeParseError(const std::string &str) throw() {
+    *this << "Failed to parse " << str << " into a memory size ";
+  }
 };
 
 template <class Num> uint64_t ParseNum(const std::string &arg) {
@@ -310,22 +311,32 @@ template <class Num> uint64_t ParseNum(const std::string &arg) {
   UTIL_THROW_IF_ARG(!stream, SizeParseError, (arg), "for the leading number.");
   std::string after;
   stream >> after;
-  UTIL_THROW_IF_ARG(after.size() > 1, SizeParseError, (arg), "because there are more than two characters after the number.");
+  UTIL_THROW_IF_ARG(
+      after.size() > 1, SizeParseError, (arg),
+      "because there are more than two characters after the number.");
   std::string throwaway;
-  UTIL_THROW_IF_ARG(stream >> throwaway, SizeParseError, (arg), "because there was more cruft " << throwaway << " after the number.");
+  UTIL_THROW_IF_ARG(stream >> throwaway, SizeParseError, (arg),
+                    "because there was more cruft " << throwaway
+                                                    << " after the number.");
 
   // Silly sort, using kilobytes as your default unit.
-  if (after.empty()) after = "K";
+  if (after.empty())
+    after = "K";
   if (after == "%") {
     uint64_t mem = GuessPhysicalMemory();
-    UTIL_THROW_IF_ARG(!mem, SizeParseError, (arg), "because % was specified but the physical memory size could not be determined.");
-    return static_cast<uint64_t>(static_cast<double>(value) * static_cast<double>(mem) / 100.0);
+    UTIL_THROW_IF_ARG(!mem, SizeParseError, (arg),
+                      "because % was specified but the physical memory size "
+                      "could not be determined.");
+    return static_cast<uint64_t>(static_cast<double>(value) *
+                                 static_cast<double>(mem) / 100.0);
   }
 
-  if (after == "k") after = "K";
+  if (after == "k")
+    after = "K";
   std::string units("bKMGTPEZY");
   std::string::size_type index = units.find(after[0]);
-  UTIL_THROW_IF_ARG(index == std::string::npos, SizeParseError, (arg), "the allowed suffixes are " << units << "%.");
+  UTIL_THROW_IF_ARG(index == std::string::npos, SizeParseError, (arg),
+                    "the allowed suffixes are " << units << "%.");
   for (std::string::size_type i = 0; i < index; ++i) {
     value *= 1024;
   }
@@ -335,7 +346,8 @@ template <class Num> uint64_t ParseNum(const std::string &arg) {
 } // namespace
 
 uint64_t ParseSize(const std::string &arg) {
-  return arg.find('.') == std::string::npos ? ParseNum<double>(arg) : ParseNum<uint64_t>(arg);
+  return arg.find('.') == std::string::npos ? ParseNum<double>(arg)
+                                            : ParseNum<uint64_t>(arg);
 }
 
 } // namespace util

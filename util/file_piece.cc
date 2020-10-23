@@ -21,8 +21,8 @@
 #include <string>
 
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <math.h>
@@ -30,7 +30,9 @@
 
 namespace util {
 
-namespace { const uint64_t kPageSize = SizePage(); }
+namespace {
+const uint64_t kPageSize = SizePage();
+}
 
 ParseNumberException::ParseNumberException(StringPiece value) throw() {
   *this << "Could not parse \"" << value << "\" into a ";
@@ -42,27 +44,33 @@ LineIterator &LineIterator::operator++() {
   return *this;
 }
 
-FilePiece::FilePiece(const char *name, std::ostream *show_progress, std::size_t min_buffer) :
-  file_(OpenReadOrThrow(name)), total_size_(SizeFile(file_.get())),
-  progress_(total_size_, total_size_ == kBadSize ? NULL : show_progress, std::string("Reading ") + name) {
+FilePiece::FilePiece(const char *name, std::ostream *show_progress,
+                     std::size_t min_buffer)
+    : file_(OpenReadOrThrow(name)), total_size_(SizeFile(file_.get())),
+      progress_(total_size_, total_size_ == kBadSize ? NULL : show_progress,
+                std::string("Reading ") + name) {
   Initialize(name, show_progress, min_buffer);
 }
 
 namespace {
 std::string NamePossiblyFind(int fd, const char *name) {
-  if (name) return name;
+  if (name)
+    return name;
   return NameFromFD(fd);
 }
 } // namespace
 
-FilePiece::FilePiece(int fd, const char *name, std::ostream *show_progress, std::size_t min_buffer) :
-  file_(fd), total_size_(SizeFile(file_.get())),
-  progress_(total_size_, total_size_ == kBadSize ? NULL : show_progress, std::string("Reading ") + NamePossiblyFind(fd, name)) {
+FilePiece::FilePiece(int fd, const char *name, std::ostream *show_progress,
+                     std::size_t min_buffer)
+    : file_(fd), total_size_(SizeFile(file_.get())),
+      progress_(total_size_, total_size_ == kBadSize ? NULL : show_progress,
+                std::string("Reading ") + NamePossiblyFind(fd, name)) {
   Initialize(NamePossiblyFind(fd, name).c_str(), show_progress, min_buffer);
 }
 
-FilePiece::FilePiece(std::istream &stream, const char * /*name*/, std::size_t min_buffer) :
-  total_size_(kBadSize) {
+FilePiece::FilePiece(std::istream &stream, const char * /*name*/,
+                     std::size_t min_buffer)
+    : total_size_(kBadSize) {
   InitializeNoRead("istream", min_buffer);
 
   fallback_to_read_ = true;
@@ -80,9 +88,8 @@ StringPiece FilePiece::ReadLine(char delim, bool strip_cr) {
     if (UTIL_LIKELY(i != position_end_)) {
       // End of line.
       // Take 1 byte off the end if it's an unwanted carriage return.
-      const std::size_t subtract_cr = (
-          (strip_cr && i > position_ && *(i - 1) == '\r') ?
-          1 : 0);
+      const std::size_t subtract_cr =
+          ((strip_cr && i > position_ && *(i - 1) == '\r') ? 1 : 0);
       StringPiece ret(position_, i - position_ - subtract_cr);
       position_ = i + 1;
       return ret;
@@ -101,19 +108,15 @@ StringPiece FilePiece::ReadLine(char delim, bool strip_cr) {
 bool FilePiece::ReadLineOrEOF(StringPiece &to, char delim, bool strip_cr) {
   try {
     to = ReadLine(delim, strip_cr);
-  } catch (const util::EndOfFileException &e) { return false; }
+  } catch (const util::EndOfFileException &e) {
+    return false;
+  }
   return true;
 }
 
-float FilePiece::ReadFloat() {
-  return ReadNumber<float>();
-}
-double FilePiece::ReadDouble() {
-  return ReadNumber<double>();
-}
-long int FilePiece::ReadLong() {
-  return ReadNumber<long int>();
-}
+float FilePiece::ReadFloat() { return ReadNumber<float>(); }
+double FilePiece::ReadDouble() { return ReadNumber<double>(); }
+long int FilePiece::ReadLong() { return ReadNumber<long int>(); }
 unsigned long int FilePiece::ReadULong() {
   return ReadNumber<unsigned long int>();
 }
@@ -122,14 +125,16 @@ unsigned long int FilePiece::ReadULong() {
 void FilePiece::InitializeNoRead(const char *name, std::size_t min_buffer) {
   file_name_ = name;
 
-  default_map_size_ = kPageSize * std::max<std::size_t>((min_buffer / kPageSize + 1), 2);
+  default_map_size_ =
+      kPageSize * std::max<std::size_t>((min_buffer / kPageSize + 1), 2);
   position_ = NULL;
   position_end_ = NULL;
   mapped_offset_ = 0;
   at_end_ = false;
 }
 
-void FilePiece::Initialize(const char *name, std::ostream *show_progress, std::size_t min_buffer) {
+void FilePiece::Initialize(const char *name, std::ostream *show_progress,
+                           std::size_t min_buffer) {
   InitializeNoRead(name, min_buffer);
   uint64_t current_offset;
   bool valid_current_offset;
@@ -145,14 +150,18 @@ void FilePiece::Initialize(const char *name, std::ostream *show_progress, std::s
   fallback_to_read_ = false;
   if (total_size_ == kBadSize || !valid_current_offset) {
     if (show_progress)
-      *show_progress << "File " << name << " isn't normal.  Using slower read() instead of mmap().  No progress bar." << std::endl;
+      *show_progress << "File " << name
+                     << " isn't normal.  Using slower read() instead of "
+                        "mmap().  No progress bar."
+                     << std::endl;
     TransitionToRead();
   } else {
     mapped_offset_ = current_offset;
   }
   Shift();
   // gzip detect.
-  if ((position_end_ >= position_ + ReadCompressed::kMagicSize) && ReadCompressed::DetectCompressedMagic(position_)) {
+  if ((position_end_ >= position_ + ReadCompressed::kMagicSize) &&
+      ReadCompressed::DetectCompressedMagic(position_)) {
     if (!fallback_to_read_) {
       at_end_ = false;
       TransitionToRead();
@@ -163,21 +172,22 @@ void FilePiece::Initialize(const char *name, std::ostream *show_progress, std::s
 namespace {
 
 static const double_conversion::StringToDoubleConverter kConverter(
-    double_conversion::StringToDoubleConverter::ALLOW_TRAILING_JUNK | double_conversion::StringToDoubleConverter::ALLOW_LEADING_SPACES,
+    double_conversion::StringToDoubleConverter::ALLOW_TRAILING_JUNK |
+        double_conversion::StringToDoubleConverter::ALLOW_LEADING_SPACES,
     std::numeric_limits<double>::quiet_NaN(),
-    std::numeric_limits<double>::quiet_NaN(),
-    "inf",
-    "NaN");
+    std::numeric_limits<double>::quiet_NaN(), "inf", "NaN");
 
 StringPiece FirstToken(StringPiece str) {
   const char *i;
   for (i = str.data(); i != str.data() + str.size(); ++i) {
-    if (kSpaces[(unsigned char)*i]) break;
+    if (kSpaces[(unsigned char)*i])
+      break;
   }
   return StringPiece(str.data(), i - str.data());
 }
 
-// std::isnan is technically C++11 not C++98.  But in practice this is a problem for visual studio.
+// std::isnan is technically C++11 not C++98.  But in practice this is a problem
+// for visual studio.
 template <class T> inline int CrossPlatformIsNaN(T value) {
 #if defined(_WIN32) || defined(_WIN64)
   return isnan(value);
@@ -189,27 +199,31 @@ template <class T> inline int CrossPlatformIsNaN(T value) {
 const char *ParseNumber(StringPiece str, float &out) {
   int count;
   out = kConverter.StringToFloat(str.data(), str.size(), &count);
-  UTIL_THROW_IF_ARG(CrossPlatformIsNaN(out) && str != "NaN" && str != "nan", ParseNumberException, (FirstToken(str)), "float");
+  UTIL_THROW_IF_ARG(CrossPlatformIsNaN(out) && str != "NaN" && str != "nan",
+                    ParseNumberException, (FirstToken(str)), "float");
   return str.data() + count;
 }
 const char *ParseNumber(StringPiece str, double &out) {
   int count;
   out = kConverter.StringToDouble(str.data(), str.size(), &count);
-  UTIL_THROW_IF_ARG(CrossPlatformIsNaN(out) && str != "NaN" && str != "nan", ParseNumberException, (FirstToken(str)), "double");
+  UTIL_THROW_IF_ARG(CrossPlatformIsNaN(out) && str != "NaN" && str != "nan",
+                    ParseNumberException, (FirstToken(str)), "double");
   return str.data() + count;
 }
 const char *ParseNumber(StringPiece str, long int &out) {
   char *end;
   errno = 0;
   out = strtol(str.data(), &end, 10);
-  UTIL_THROW_IF_ARG(errno || (end == str.data()), ParseNumberException, (FirstToken(str)), "long int");
+  UTIL_THROW_IF_ARG(errno || (end == str.data()), ParseNumberException,
+                    (FirstToken(str)), "long int");
   return end;
 }
 const char *ParseNumber(StringPiece str, unsigned long int &out) {
   char *end;
   errno = 0;
   out = strtoul(str.data(), &end, 10);
-  UTIL_THROW_IF_ARG(errno || (end == str.data()), ParseNumberException, (FirstToken(str)), "unsigned long int");
+  UTIL_THROW_IF_ARG(errno || (end == str.data()), ParseNumberException,
+                    (FirstToken(str)), "unsigned long int");
   return end;
 }
 } // namespace
@@ -234,14 +248,16 @@ template <class T> T FilePiece::ReadNumber() {
   return ret;
 }
 
-const char *FilePiece::FindDelimiterOrEOF(const bool *delim)  {
+const char *FilePiece::FindDelimiterOrEOF(const bool *delim) {
   std::size_t skip = 0;
   while (true) {
     for (const char *i = position_ + skip; i < position_end_; ++i) {
-      if (delim[static_cast<unsigned char>(*i)]) return i;
+      if (delim[static_cast<unsigned char>(*i)])
+        return i;
     }
     if (at_end_) {
-      if (position_ == position_end_) Shift();
+      if (position_ == position_end_)
+        Shift();
       return position_end_;
     }
     skip = position_end_ - position_;
@@ -256,12 +272,16 @@ void FilePiece::Shift() {
   }
   uint64_t desired_begin = position_ - data_.begin() + mapped_offset_;
 
-  if (!fallback_to_read_) MMapShift(desired_begin);
+  if (!fallback_to_read_)
+    MMapShift(desired_begin);
   // Notice an mmap failure might set the fallback.
-  if (fallback_to_read_) ReadShift();
+  if (fallback_to_read_)
+    ReadShift();
 
-  for (last_space_ = position_end_ - 1; last_space_ >= position_; --last_space_) {
-    if (kSpaces[static_cast<unsigned char>(*last_space_)])  break;
+  for (last_space_ = position_end_ - 1; last_space_ >= position_;
+       --last_space_) {
+    if (kSpaces[static_cast<unsigned char>(*last_space_)])
+      break;
   }
 }
 
@@ -277,11 +297,13 @@ void FilePiece::MMapShift(uint64_t desired_begin) {
   if (position_ == data_.begin() + ignore && position_) {
     default_map_size_ *= 2;
   }
-  // Local version so that in case of failure it doesn't overwrite the class variable.
+  // Local version so that in case of failure it doesn't overwrite the class
+  // variable.
   uint64_t mapped_offset = desired_begin - ignore;
 
   uint64_t mapped_size;
-  if (default_map_size_ >= static_cast<std::size_t>(total_size_ - mapped_offset)) {
+  if (default_map_size_ >=
+      static_cast<std::size_t>(total_size_ - mapped_offset)) {
     at_end_ = true;
     mapped_size = total_size_ - mapped_offset;
   } else {
@@ -355,7 +377,9 @@ void FilePiece::ReadShift() {
     }
   }
 
-  std::size_t read_return = fell_back_.Read(static_cast<uint8_t*>(data_.get()) + already_read, default_map_size_ - already_read);
+  std::size_t read_return =
+      fell_back_.Read(static_cast<uint8_t *>(data_.get()) + already_read,
+                      default_map_size_ - already_read);
   progress_.Set(fell_back_.RawAmount());
 
   if (read_return == 0) {

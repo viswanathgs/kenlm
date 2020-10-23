@@ -3,11 +3,13 @@
 #define BOOST_TEST_MODULE SizedIteratorTest
 #include <boost/test/unit_test.hpp>
 
-namespace util { namespace {
+namespace util {
+namespace {
 
 struct CompareChar {
   bool operator()(const void *first, const void *second) const {
-    return *static_cast<const char*>(first) < *static_cast<const char*>(second);
+    return *static_cast<const char *>(first) <
+           *static_cast<const char *>(second);
   }
 };
 
@@ -19,4 +21,5 @@ BOOST_AUTO_TEST_CASE(sort) {
   BOOST_CHECK_EQUAL(2, items[2]);
 }
 
-}} // namespace anonymous util
+} // namespace
+} // namespace util

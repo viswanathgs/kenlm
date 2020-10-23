@@ -7,11 +7,15 @@
 
 #include <unistd.h>
 
-namespace util { namespace stream { namespace {
+namespace util {
+namespace stream {
+namespace {
 
-struct CompareUInt64 : public std::binary_function<const void *, const void *, bool> {
+struct CompareUInt64
+    : public std::binary_function<const void *, const void *, bool> {
   bool operator()(const void *first, const void *second) const {
-    return *static_cast<const uint64_t*>(first) < *reinterpret_cast<const uint64_t*>(second);
+    return *static_cast<const uint64_t *>(first) <
+           *reinterpret_cast<const uint64_t *>(second);
   }
 };
 
@@ -23,7 +27,7 @@ struct Putter {
   void Run(const ChainPosition &position) {
     Stream put_shuffled(position);
     for (uint64_t i = 0; i < shuffled_.size(); ++i, ++put_shuffled) {
-      *static_cast<uint64_t*>(put_shuffled.Get()) = shuffled_[i];
+      *static_cast<uint64_t *>(put_shuffled.Get()) = shuffled_[i];
     }
     put_shuffled.Poison();
   }
@@ -54,9 +58,11 @@ BOOST_AUTO_TEST_CASE(FromShuffled) {
   Stream sorted;
   chain >> sorted >> kRecycle;
   for (uint64_t i = 0; i < kSize; ++i, ++sorted) {
-    BOOST_CHECK_EQUAL(i, *static_cast<const uint64_t*>(sorted.Get()));
+    BOOST_CHECK_EQUAL(i, *static_cast<const uint64_t *>(sorted.Get()));
   }
   BOOST_CHECK(!sorted);
 }
 
-}}} // namespaces
+} // namespace
+} // namespace stream
+} // namespace util

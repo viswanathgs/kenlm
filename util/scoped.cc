@@ -17,7 +17,8 @@ MallocException::~MallocException() throw() {}
 
 namespace {
 void *InspectAddr(void *addr, std::size_t requested, const char *func_name) {
-  UTIL_THROW_IF_ARG(!addr && requested, MallocException, (requested), "in " << func_name);
+  UTIL_THROW_IF_ARG(!addr && requested, MallocException, (requested),
+                    "in " << func_name);
   return addr;
 }
 } // namespace
@@ -36,7 +37,7 @@ void scoped_malloc::call_realloc(std::size_t requested) {
 
 void AdviseHugePages(const void *addr, std::size_t size) {
 #if MADV_HUGEPAGE
-  madvise((void*)addr, size, MADV_HUGEPAGE);
+  madvise((void *)addr, size, MADV_HUGEPAGE);
 #endif
 }
 

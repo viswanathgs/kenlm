@@ -16,7 +16,9 @@ void Read::Run(const ChainPosition &position) {
   const std::size_t entry_size = position.GetChain().EntrySize();
   for (Link link(position); link; ++link) {
     std::size_t got = util::ReadOrEOF(file_, link->Get(), block_size);
-    UTIL_THROW_IF(got % entry_size, ReadSizeException, "File ended with " << got << " bytes, not a multiple of " << entry_size << ".");
+    UTIL_THROW_IF(got % entry_size, ReadSizeException,
+                  "File ended with " << got << " bytes, not a multiple of "
+                                     << entry_size << ".");
     if (got == 0) {
       link.Poison();
       return;
@@ -28,9 +30,14 @@ void Read::Run(const ChainPosition &position) {
 
 void PRead::Run(const ChainPosition &position) {
   scoped_fd owner;
-  if (own_) owner.reset(file_);
+  if (own_)
+    owner.reset(file_);
   const uint64_t size = SizeOrThrow(file_);
-  UTIL_THROW_IF(size % static_cast<uint64_t>(position.GetChain().EntrySize()), ReadSizeException, "File size " << file_ << " size is " << size << " not a multiple of " << position.GetChain().EntrySize());
+  UTIL_THROW_IF(size % static_cast<uint64_t>(position.GetChain().EntrySize()),
+                ReadSizeException,
+                "File size " << file_ << " size is " << size
+                             << " not a multiple of "
+                             << position.GetChain().EntrySize());
   const std::size_t block_size = position.GetChain().BlockSize();
   const uint64_t block_size64 = static_cast<uint64_t>(block_size);
   Link link(position);

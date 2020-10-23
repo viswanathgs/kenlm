@@ -36,5 +36,5 @@ void SplitWorker::Run(const util::stream::ChainPosition &position) {
   backoff_input_.Poison();
 }
 
-}
-}
+} // namespace interpolate
+} // namespace lm

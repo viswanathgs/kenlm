@@ -2,13 +2,14 @@
 #define BOOST_TEST_MODULE FakeOStreamTest
 
 #include "util/string_stream.hh"
-#include <boost/test/unit_test.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <cstddef>
 #include <limits>
 
-namespace util { namespace {
+namespace util {
+namespace {
 
 template <class T> void TestEqual(const T value) {
   StringStream strme;
@@ -50,9 +51,7 @@ BOOST_AUTO_TEST_CASE(Integer) {
 
 enum TinyEnum { EnumValue };
 
-BOOST_AUTO_TEST_CASE(EnumCase) {
-  TestEqual(EnumValue);
-}
+BOOST_AUTO_TEST_CASE(EnumCase) { TestEqual(EnumValue); }
 
 BOOST_AUTO_TEST_CASE(Strings) {
   TestEqual("foo");
@@ -77,4 +76,5 @@ BOOST_AUTO_TEST_CASE(Strings) {
   BOOST_CHECK_EQUAL("abccabcdef", stream.str());
 }
 
-}} // namespaces
+} // namespace
+} // namespace util
